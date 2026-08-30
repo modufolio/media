@@ -1,0 +1,29 @@
+{
+  "name": "@modufolio/media",
+  "version": "0.1.0",
+  "description": "Media-library UI for Appkit portfolio sites \u2014 album sidebar, media grid, inspectors, upload queue, and their composables (Vue 3 + Inertia).",
+  "license": "MIT",
+  "type": "module",
+  "author": "Maarten Thiebou",
+  "main": "./src/index.ts",
+  "module": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "import": "./src/index.ts"
+    }
+  },
+  "peerDependencies": {
+    "@modufolio/panel": "*",
+    "vue": "^3.4"
+  },
+  "dependencies": {
+    "vue": "^3.5.18",
+    "@vueuse/core": "^13.0.0",
+    "@inertiajs/vue3": "3.0.0",
+    "lodash": "^4.17.21",
+    "blurhash": "^2.0.5",
+    "tus-js-client": "^4.3.1",
+    "plyr": "^3.8.4"
+  }
+}
