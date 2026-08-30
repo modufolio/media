@@ -472,6 +472,7 @@ class Album
         return $this->albumMedia;
     }
 
+    /** @return array<string, mixed> */
     public function toArray(): array
     {
         return [
@@ -529,8 +530,8 @@ class Album
     public static function slugify(string $title): string
     {
         $slug = strtolower(trim($title));
-        $slug = preg_replace('/[^a-z0-9\s-]/', '', $slug);
-        $slug = preg_replace('/[\s-]+/', '-', $slug);
+        $slug = preg_replace('/[^a-z0-9\s-]/', '', $slug) ?? '';
+        $slug = preg_replace('/[\s-]+/', '-', $slug) ?? '';
         return trim($slug, '-');
     }
 }

@@ -219,7 +219,7 @@ class MediaUploadProcessingService
                     default => null,
                 };
 
-                if ($gdImage !== null) {
+                if ($gdImage !== null && $gdImage !== false) {
                     $thumbW = 64;
                     $thumbH = 64;
                     $thumb = imagecreatetruecolor($thumbW, $thumbH);
@@ -231,6 +231,9 @@ class MediaUploadProcessingService
                         $row = [];
                         for ($x = 0; $x < $thumbW; ++$x) {
                             $index = imagecolorat($thumb, $x, $y);
+                            if ($index === false) {
+                                continue;
+                            }
                             $colors = imagecolorsforindex($thumb, $index);
                             $row[] = [$colors['red'], $colors['green'], $colors['blue']];
                         }

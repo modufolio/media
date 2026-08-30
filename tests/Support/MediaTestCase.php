@@ -72,24 +72,17 @@ abstract class MediaTestCase extends TestCase
 
     protected function albumRepo(): AlbumRepository
     {
-        $repo = $this->em->getRepository(Album::class);
-        assert($repo instanceof AlbumRepository);
-
-        return $repo;
+        return $this->em->getRepository(Album::class);
     }
 
     protected function mediaRepo(): MediaRepository
     {
-        $repo = $this->em->getRepository(Media::class);
-        assert($repo instanceof MediaRepository);
-
-        return $repo;
+        return $this->em->getRepository(Media::class);
     }
 
     protected function albumModel(): AlbumModel
     {
         $albumMediaRepo = $this->em->getRepository(\Modufolio\Media\Entity\AlbumMedia::class);
-        assert($albumMediaRepo instanceof AlbumMediaRepository);
 
         return new AlbumModel($this->em, $this->albumRepo(), $albumMediaRepo, $this->mediaRepo());
     }

@@ -52,10 +52,15 @@ final class SmartAlbumTest extends MediaTestCase
         return new SmartAlbumRunner($this->em);
     }
 
-    /** An inline album for spec-focused tests. */
+    /**
+     * An inline album for spec-focused tests.
+     *
+     * @param array<string, 'ASC'|'DESC'> $order
+     */
     private function album(Specification $spec, array $order = ['createdAt' => 'DESC'], ?int $limit = null): SmartAlbumInterface
     {
         return new class($spec, $order, $limit) implements SmartAlbumInterface {
+            /** @param array<string, 'ASC'|'DESC'> $order */
             public function __construct(
                 private readonly Specification $spec,
                 private readonly array $order,

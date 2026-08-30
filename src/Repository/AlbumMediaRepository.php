@@ -110,6 +110,8 @@ class AlbumMediaRepository extends EntityRepository
 
     /**
      * Find all media entries for an album, ordered by position.
+     *
+     * @return list<AlbumMedia>
      */
     public function findByAlbum(Album $album): array
     {
@@ -123,6 +125,8 @@ class AlbumMediaRepository extends EntityRepository
 
     /**
      * Find all media entries for an album by album ID, ordered by position.
+     *
+     * @return list<AlbumMedia>
      */
     public function findByAlbumId(int $albumId): array
     {
@@ -187,16 +191,20 @@ class AlbumMediaRepository extends EntityRepository
     }
 
     /**
-     * Find all albums that contain a specific media item.
+     * Album ids containing a specific media item.
+     *
+     * @return list<int>
      */
     public function findAlbumsByMedia(Media $media): array
     {
-        return $this->createQueryBuilder('am')
+        $ids = $this->createQueryBuilder('am')
             ->select('IDENTITY(am.album)')
             ->where('am.media = :media')
             ->setParameter('media', $media)
             ->getQuery()
             ->getSingleColumnResult();
+
+        return array_values(array_map(static fn ($id) => (int) $id, $ids));
     }
 
     /**

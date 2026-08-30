@@ -27,7 +27,10 @@ final class MediaModelTest extends MediaTestCase
     {
         $jobs = new class($this->deletedJobFiles) implements MediaJobsInterface {
             /** @param list<string> $log */
-            public function __construct(private array &$log) {}
+            public function __construct(
+                // Written here, read through the by-ref binding in the test.
+                private array &$log, // @phpstan-ignore property.onlyWritten
+            ) {}
 
             public function deleteByOriginalFilename(string $filename): int
             {
@@ -50,7 +53,10 @@ final class MediaModelTest extends MediaTestCase
     {
         return new class($this->storedFeatures) implements FocusStoreInterface {
             /** @param list<array{Media, array<string, mixed>}> $log */
-            public function __construct(private array &$log) {}
+            public function __construct(
+                // Written here, read through the by-ref binding in the test.
+                private array &$log, // @phpstan-ignore property.onlyWritten
+            ) {}
 
             public function upsertFeatures(Media $media, array $features): void
             {

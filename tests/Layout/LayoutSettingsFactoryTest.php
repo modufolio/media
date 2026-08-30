@@ -14,7 +14,7 @@ final class LayoutSettingsFactoryTest extends TestCase
         foreach (LayoutSettingsFactory::layouts() as $layout) {
             $this->assertTrue(LayoutSettingsFactory::isLayout($layout));
             $settings = LayoutSettingsFactory::make($layout);
-            $this->assertIsArray($settings->toArray());
+            $this->assertNotSame([], $settings->toArray());
         }
     }
 

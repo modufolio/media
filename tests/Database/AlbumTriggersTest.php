@@ -69,8 +69,7 @@ final class AlbumTriggersTest extends TestCase
 
     public function testEveryTriggerIsInstalledInSqlite(): void
     {
-        $names = $this->db
-            ->query("SELECT name FROM sqlite_master WHERE type = 'trigger' ORDER BY name")
+        $names = $this->query("SELECT name FROM sqlite_master WHERE type = 'trigger' ORDER BY name")
             ->fetchAll(PDO::FETCH_COLUMN);
 
         $expected = [
@@ -88,8 +87,7 @@ final class AlbumTriggersTest extends TestCase
             $this->db->exec($sql);
         }
 
-        $remaining = (int) $this->db
-            ->query("SELECT COUNT(*) FROM sqlite_master WHERE type = 'trigger'")
+        $remaining = (int) $this->query("SELECT COUNT(*) FROM sqlite_master WHERE type = 'trigger'")
             ->fetchColumn();
 
         $this->assertSame(0, $remaining);
@@ -164,7 +162,7 @@ final class AlbumTriggersTest extends TestCase
     {
         $this->insertAlbum(id: 1, left: 1, right: 2, mediaCount: 0, level: 10);
 
-        $this->assertSame(1, (int) $this->db->query('SELECT COUNT(*) FROM albums')->fetchColumn());
+        $this->assertSame(1, (int) $this->query('SELECT COUNT(*) FROM albums')->fetchColumn());
     }
 
     // ---------------------------------------------------------------
@@ -278,5 +276,14 @@ final class AlbumTriggersTest extends TestCase
         $stmt->execute([$albumId]);
 
         return array_map('intval', $stmt->fetchAll(PDO::FETCH_KEY_PAIR));
+    }
+
+    /** PDO::query() returns false on failure; a bad statement should fail loudly. */
+    private function query(string $sql): \PDOStatement
+    {
+        $stmt = $this->db->query($sql);
+        \assert($stmt instanceof \PDOStatement);
+
+        return $stmt;
     }
 }

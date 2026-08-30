@@ -59,6 +59,7 @@ class Media
     #[ORM\Column(name: 'height', type: 'integer', nullable: true)]
     private ?int $height = null;
 
+    /** @var array<string, mixed>|null */
     #[ORM\Column(name: 'metadata', type: 'json', nullable: true)]
     private ?array $metadata = null;
 
@@ -285,11 +286,13 @@ class Media
         return $this;
     }
 
+    /** @return array<string, mixed>|null */
     public function getMetadata(): ?array
     {
         return $this->metadata;
     }
 
+    /** @param array<string, mixed>|null $metadata */
     public function setMetadata(?array $metadata): self
     {
         $this->metadata = $metadata;
@@ -498,6 +501,7 @@ class Media
         return $this->getUrl();
     }
 
+    /** @return array<string, mixed> */
     public function toArray(): array
     {
         return [

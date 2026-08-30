@@ -198,7 +198,7 @@ class MediaModel
      * Resolve uuids to media, run $mutate on each, flush once. Returns the count.
      *
      * @param array<int, mixed>    $uuids
-     * @param callable(Media): void $mutate
+     * @param callable(Media): mixed $mutate
      */
     private function applyToEach(array $uuids, callable $mutate): int
     {

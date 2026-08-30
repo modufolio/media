@@ -1,0 +1,74 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+# modufolio/appkit is a composer path repository (../appkit), so both repos are
+# checked out side by side inside the workspace and every job runs from media/.
+defaults:
+  run:
+    working-directory: media
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.2', '8.3', '8.4', '8.5']
+
+    steps:
+      - name: Checkout media
+        uses: actions/checkout@v6
+        with:
+          path: media
+
+      - name: Checkout appkit (path dependency)
+        uses: actions/checkout@v6
+        with:
+          repository: modufolio/appkit
+          path: appkit
+
+      - name: Set up PHP ${{ matrix.php }}
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          coverage: none
+          extensions: curl, dom, exif, fileinfo, gd, intl, libxml, pdo, pdo_sqlite, simplexml, sqlite3, zip
+
+      - name: Install dependencies
+        run: composer update --no-interaction --prefer-dist --optimize-autoloader
+
+      - name: Run tests
+        run: vendor/bin/phpunit
+
+  phpstan:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout media
+        uses: actions/checkout@v6
+        with:
+          path: media
+
+      - name: Checkout appkit (path dependency)
+        uses: actions/checkout@v6
+        with:
+          repository: modufolio/appkit
+          path: appkit
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          coverage: none
+          extensions: curl, dom, exif, fileinfo, gd, intl, libxml, pdo, pdo_sqlite, simplexml, sqlite3, zip
+
+      - name: Install dependencies
+        run: composer update --no-interaction --prefer-dist --optimize-autoloader
+
+      - name: Run PHPStan
+        run: composer stan

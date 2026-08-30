@@ -80,9 +80,7 @@ class AlbumRepository extends EntityRepository implements AlbumTreeInterface
     // ORM QUERIES (return Album entities)
     // ========================================================================
 
-    /**
-     * Get all albums ordered by nested set left_id (tree order).
-     */
+    /** @return list<Album> */
     public function findAllAsTree(): array
     {
         return $this->withCovers($this->createQueryBuilder('a'))
@@ -91,9 +89,7 @@ class AlbumRepository extends EntityRepository implements AlbumTreeInterface
             ->getResult();
     }
 
-    /**
-     * Get root-level albums only (level = 1).
-     */
+    /** @return list<Album> */
     public function findRootAlbums(): array
     {
         return $this->withCovers($this->createQueryBuilder('a'))
@@ -104,9 +100,7 @@ class AlbumRepository extends EntityRepository implements AlbumTreeInterface
             ->getResult();
     }
 
-    /**
-     * Get direct children of a set.
-     */
+    /** @return list<Album> */
     public function findChildren(Album $parent): array
     {
         return $this->withCovers($this->createQueryBuilder('a'))
@@ -193,7 +187,7 @@ class AlbumRepository extends EntityRepository implements AlbumTreeInterface
 
     public function children(?object $parent = null): array
     {
-        if ($parent === null) {
+        if (!$parent instanceof Album) {
             return $this->findAllAsTree();
         }
         return $this->findChildren($parent);
@@ -226,9 +220,7 @@ class AlbumRepository extends EntityRepository implements AlbumTreeInterface
         return (int)($result ?? -1);
     }
 
-    /**
-     * Get all descendants of a set (any depth).
-     */
+    /** @return list<Album> */
     public function findDescendants(Album $parent): array
     {
         return $this->createQueryBuilder('a')
@@ -241,9 +233,7 @@ class AlbumRepository extends EntityRepository implements AlbumTreeInterface
             ->getResult();
     }
 
-    /**
-     * Get ancestors of an album (path from root).
-     */
+    /** @return list<Album> */
     public function findAncestors(Album $album): array
     {
         return $this->createQueryBuilder('a')

@@ -90,6 +90,7 @@ final class AlbumModelTest extends MediaTestCase
         $this->em->clear();
 
         $fresh = $this->albumRepo()->find($album->getId());
+        $this->assertNotNull($fresh);
         $this->assertSame('Maarten', $fresh->getCreatedBy()?->getName());
     }
 
@@ -107,6 +108,8 @@ final class AlbumModelTest extends MediaTestCase
         $children = $this->albumRepo()->children($freshB);
 
         $this->assertCount(1, $children);
-        $this->assertSame('nomad', $children[0]->getSlug());
+        $child = $children[0];
+        $this->assertInstanceOf(Album::class, $child);
+        $this->assertSame('nomad', $child->getSlug());
     }
 }

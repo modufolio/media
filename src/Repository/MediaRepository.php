@@ -146,6 +146,7 @@ class MediaRepository extends EntityRepository
         return array_map('intval', $idByUuid);
     }
 
+    /** @return list<Media> */
     public function findAllOrdered(?int $limit = null, int $offset = 0): array
     {
         $qb = $this->createQueryBuilder('m')
@@ -159,6 +160,7 @@ class MediaRepository extends EntityRepository
         return $qb->getQuery()->getResult();
     }
 
+    /** @return list<Media> */
     public function findImagesOrdered(?int $limit = null, int $offset = 0): array
     {
         $qb = $this->createQueryBuilder('m')
@@ -256,6 +258,7 @@ class MediaRepository extends EntityRepository
         return $qb->getQuery()->getResult();
     }
 
+    /** @return list<Media> */
     public function findFavorites(?int $limit = null, int $offset = 0): array
     {
         $qb = $this->createQueryBuilder('m')
@@ -515,7 +518,7 @@ class MediaRepository extends EntityRepository
             ->getQuery()
             ->getSingleScalarResult();
 
-        return $result ? new \DateTimeImmutable($result) : null;
+        return is_string($result) && $result !== '' ? new \DateTimeImmutable($result) : null;
     }
 
     public function getTotalCount(): int
@@ -536,6 +539,7 @@ class MediaRepository extends EntityRepository
             ->getSingleScalarResult();
     }
 
+    /** @return list<Media> */
     public function findRecentAI(\Modufolio\Media\Contract\UploaderInterface $user, int $limit = 20): array
     {
         return $this->createQueryBuilder('m')
