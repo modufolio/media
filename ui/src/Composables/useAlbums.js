@@ -21,6 +21,10 @@ export function useAlbums() {
     const kindOf = (albumType) => (albumType === 1 ? 'Set' : 'Album')
     const kindOfId = (id) => kindOf(albums.value.find(a => a.id === id)?.album_type)
 
+    /**
+     * @param {{ title: string, description?: string|null, visibility?: string,
+     *           album_type?: number, parent_id?: number|string|null }} album
+     */
     const createAlbum = ({ title, description = null, visibility = 'public', album_type = 0, parent_id = null }) => {
         const kind = kindOf(album_type)
         router.post(panelUrl('/albums'), { title, description, visibility, album_type, parent_id }, {

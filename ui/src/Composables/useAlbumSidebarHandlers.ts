@@ -1,6 +1,6 @@
 import { ref } from 'vue'
 import type { Ref, ComputedRef } from 'vue'
-// @ts-expect-error - useAlbums.js has no type declarations
+// useAlbums.js is typed through allowJs + its JSDoc annotations.
 import { useAlbums } from './useAlbums.js'
 
 interface Album {
@@ -115,8 +115,9 @@ export function useAlbumSidebarHandlers(options: UseAlbumSidebarHandlersOptions)
     const handleMoveAlbum = ({ albumId, parentId }: { albumId: number | string; parentId: number | string }) => moveAlbum(albumId, parentId)
 
     return {
-        albums,
-        albumTree,
+        // useAlbums is untyped JS; this file owns the typed boundary.
+        albums: albums as ComputedRef<Album[]>,
+        albumTree: albumTree as ComputedRef<Album[]>,
         showAlbumDialog,
         dialogAlbumType,
         editingAlbum,

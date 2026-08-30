@@ -1,29 +1,81 @@
 {
   "name": "@modufolio/media",
   "version": "0.1.0",
-  "description": "Media-library UI for Appkit portfolio sites \u2014 album sidebar, media grid, inspectors, upload queue, and their composables (Vue 3 + Inertia).",
+  "description": "Media-library UI for Appkit portfolio sites — album sidebar, media grid, inspectors, upload queue, and their composables (Vue 3 + Inertia).",
   "license": "MIT",
   "type": "module",
   "author": "Maarten Thiebou",
-  "main": "./src/index.ts",
-  "module": "./src/index.ts",
-  "types": "./src/index.ts",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "import": "./src/index.ts"
-    }
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./styles": "./dist/index.css"
   },
   "peerDependencies": {
-    "@modufolio/panel": "*",
-    "vue": "^3.4"
+    "@inertiajs/vue3": "^3.0.0",
+    "@modufolio/panel": "^0.1.0",
+    "@vueuse/core": ">=10",
+    "lodash": "^4.17.0",
+    "vue": "^3.5.0"
+  },
+  "sideEffects": [
+    "*.css"
+  ],
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "vite build",
+    "prepublishOnly": "npm run build",
+    "type-check": "vue-tsc --noEmit -p tsconfig.json"
+  },
+  "peerDependenciesMeta": {
+    "lodash": {
+      "optional": true
+    }
   },
   "dependencies": {
-    "vue": "^3.5.18",
-    "@vueuse/core": "^13.0.0",
-    "@inertiajs/vue3": "3.0.0",
-    "lodash": "^4.17.21",
     "blurhash": "^2.0.5",
-    "tus-js-client": "^4.3.1",
-    "plyr": "^3.8.4"
+    "plyr": "^3.8.4",
+    "tus-js-client": "^4.3.1"
+  },
+  "devDependencies": {
+    "@inertiajs/vue3": "3.0.0",
+    "@modufolio/panel": "file:../../panel/ui",
+    "@types/lodash": "^4.17.24",
+    "@types/node": "^26.4.0",
+    "@vitejs/plugin-vue": "^6.0.1",
+    "@vueuse/core": "^13.0.0",
+    "lodash": "^4.17.21",
+    "typescript": "^5.9.3",
+    "vite": "^6.4.1",
+    "vite-plugin-dts": "^5.0.3",
+    "vue": "^3.5.18",
+    "vue-tsc": "^3.2.4"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/modufolio/media.git",
+    "directory": "ui"
+  },
+  "homepage": "https://github.com/modufolio/media/tree/main/ui#readme",
+  "bugs": "https://github.com/modufolio/media/issues",
+  "keywords": [
+    "vue",
+    "inertia",
+    "media-library",
+    "photo",
+    "album",
+    "gallery",
+    "upload",
+    "tus"
+  ],
+  "publishConfig": {
+    "access": "public"
   }
 }
