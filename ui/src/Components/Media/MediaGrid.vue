@@ -17,13 +17,13 @@
     >
       <div
         v-if="allowUpload && isFileDragging"
-        class="absolute inset-0 z-20 border-2 border-dashed border-primary-500 bg-primary-50/80 rounded-lg flex items-center justify-center pointer-events-none"
+        class="absolute inset-0 z-20 border-2 border-dashed border-primary bg-primary-surface/80 rounded-lg flex items-center justify-center pointer-events-none"
       >
         <div class="text-center">
-          <svg class="mx-auto h-10 w-10 text-primary-500" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+          <svg class="mx-auto h-10 w-10 text-primary" stroke="currentColor" fill="none" viewBox="0 0 48 48">
             <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
           </svg>
-          <p class="mt-2 text-sm font-semibold text-primary-600">Drop files to upload</p>
+          <p class="mt-2 text-sm font-semibold text-primary">Drop files to upload</p>
         </div>
       </div>
     </Transition>
@@ -34,7 +34,7 @@
         <div
           v-for="n in skeletonCount"
           :key="n"
-          class="aspect-square bg-gray-100 rounded animate-pulse"
+          class="aspect-square bg-media-placeholder rounded animate-pulse"
         />
       </div>
     </div>
@@ -42,7 +42,7 @@
     <!-- Count isn't knowable ahead of the fetch — a fixed-size skeleton grid
          would just be a guess, so show a plain spinner instead. -->
     <div v-else-if="loading && files.length === 0" class="flex items-center justify-center py-20">
-      <svg class="w-8 h-8 animate-spin text-gray-400" fill="none" viewBox="0 0 24 24">
+      <svg class="w-8 h-8 animate-spin text-ink-3" fill="none" viewBox="0 0 24 24">
         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
       </svg>
@@ -60,7 +60,7 @@
         />
       </div>
       <div class="absolute inset-0 flex items-center justify-center">
-        <svg class="w-8 h-8 animate-spin text-gray-400" fill="none" viewBox="0 0 24 24">
+        <svg class="w-8 h-8 animate-spin text-ink-3" fill="none" viewBox="0 0 24 24">
           <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
           <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
         </svg>
@@ -86,7 +86,7 @@
           ]"
           class="relative"
           :class="reorderable && reorderDropIndex === index && reorderDragIndex !== null && reorderDragIndex !== index
-            ? 'ring-2 ring-primary-500 ring-offset-1 rounded overflow-hidden'
+            ? 'ring-2 ring-primary ring-offset-1 rounded overflow-hidden'
             : ''"
           @dragover="reorderable ? onReorderDragOver($event, index) : undefined"
           @dragleave="reorderable ? onReorderDragLeave($event) : undefined"
@@ -95,7 +95,7 @@
           <MediaCard
             :file="file"
             :selected="selectedIds.has(file.id)"
-            :selected-count="selectedIds.size"
+            :selected-count="selectedIds.has(file.id) ? selectedIds.size : 1"
             :hide-favorite="hideFavorite"
             :show-rating="showRating"
             @view="$emit('view', $event)"
@@ -113,11 +113,11 @@
       :class="allowUpload ? 'cursor-pointer' : ''"
       @click="allowUpload && triggerFileInput()"
     >
-      <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg class="mx-auto h-12 w-12 text-ink-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
       </svg>
-      <p class="mt-2 text-gray-500">{{ emptyMessage }}</p>
-      <p class="text-sm text-gray-400">{{ allowUpload ? emptySubMessageUpload : emptySubMessage }}</p>
+      <p class="mt-2 text-ink-2">{{ emptyMessage }}</p>
+      <p class="text-sm text-ink-3">{{ allowUpload ? emptySubMessageUpload : emptySubMessage }}</p>
     </div>
 
     <!-- Hidden file input for click-to-upload -->

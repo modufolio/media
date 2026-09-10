@@ -2,12 +2,12 @@
   <div class="order-1 lg:order-2 lg:sticky lg:top-6 w-full lg:w-72 shrink-0">
     <button
       type="button"
-      class="lg:hidden w-full flex items-center justify-between bg-white rounded-lg shadow px-4 py-3 text-sm"
+      class="lg:hidden w-full flex items-center justify-between bg-surface rounded-lg shadow px-4 py-3 text-sm"
       @click="inspectorOpen = !inspectorOpen"
     >
-      <span class="font-medium text-gray-700">{{ title }}</span>
+      <span class="font-medium text-ink-2">{{ title }}</span>
       <svg
-        class="w-4 h-4 text-gray-400 transition-transform duration-200"
+        class="w-4 h-4 text-ink-3 transition-transform duration-200"
         :class="{ 'rotate-180': inspectorOpen }"
         fill="none"
         stroke="currentColor"

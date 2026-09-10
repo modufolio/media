@@ -1,5 +1,5 @@
 <template>
-  <div class="bg-white rounded-lg shadow divide-y divide-gray-100 self-start">
+  <div class="bg-surface rounded-lg shadow divide-y divide-line self-start">
 
     <!-- Cover Slots (3 drag-drop targets) — albums only, not sets -->
     <div v-if="album.album_type !== 1" class="px-5 py-4">
@@ -8,7 +8,7 @@
         class="flex items-center justify-between w-full mb-3 group"
         @click="collapseCovers = !collapseCovers"
       >
-        <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Covers</h3>
+        <h3 class="text-xs font-semibold text-label uppercase tracking-wider">Covers</h3>
         <svg class="w-3 h-3 transition-transform duration-200" :class="!collapseCovers ? 'rotate-90' : ''" fill="currentColor" viewBox="0 0 20 20">
           <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
         </svg>
@@ -23,8 +23,8 @@
             :class="slot
               ? 'border-transparent'
               : dragOverSlot === index
-                ? 'border-primary-400 bg-primary-50'
-                : 'border-dashed border-gray-200 bg-gray-50'"
+                ? 'border-primary bg-primary-surface'
+                : 'border-dashed border-line bg-surface-sunken'"
             @dragover.prevent="dragOverSlot = index"
             @dragleave="dragOverSlot = null"
             @drop.prevent="onDrop($event, index)"
@@ -39,7 +39,7 @@
               />
               <button
                 @click.stop="removeCover(index)"
-                class="absolute top-1 right-1 w-5 h-5 bg-black/60 hover:bg-black/80 text-white rounded-full flex items-center justify-center transition-colors"
+                class="absolute top-1 right-1 w-5 h-5 bg-black/60 hover:bg-black/80 text-media-overlay-ink rounded-full flex items-center justify-center transition-colors"
                 title="Remove cover"
               >
                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -53,21 +53,21 @@
               <div class="absolute inset-0 flex flex-col items-center justify-center gap-1 pointer-events-none">
                 <svg
                   class="w-6 h-6 transition-colors"
-                  :class="dragOverSlot === index ? 'text-primary-400' : 'text-gray-300'"
+                  :class="dragOverSlot === index ? 'text-primary' : 'text-ink-3'"
                   fill="none" stroke="currentColor" viewBox="0 0 24 24"
                 >
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
                 <span
                   class="text-xs transition-colors"
-                  :class="dragOverSlot === index ? 'text-primary-400' : 'text-gray-300'"
+                  :class="dragOverSlot === index ? 'text-primary' : 'text-ink-3'"
                 >{{ index + 1 }}</span>
               </div>
             </template>
           </div>
         </div>
 
-        <p class="mt-2 text-xs text-gray-400 text-center">Drag photos from the grid to set covers</p>
+        <p class="mt-2 text-xs text-ink-3 text-center">Drag photos from the grid to set covers</p>
       </template>
     </div>
 
@@ -79,11 +79,11 @@
         @click="collapseProperties = !collapseProperties"
       >
         <span class="flex items-center gap-2">
-          <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Properties</h3>
+          <h3 class="text-xs font-semibold text-label uppercase tracking-wider">Properties</h3>
           <transition name="fade">
-            <span v-if="!collapseProperties && saveStatus === 'saving'" class="text-xs text-gray-400">Saving…</span>
-            <span v-else-if="!collapseProperties && saveStatus === 'saved'" class="text-xs text-green-600 font-medium">Saved ✓</span>
-            <span v-else-if="!collapseProperties && saveStatus === 'error'" class="text-xs text-red-500">Error</span>
+            <span v-if="!collapseProperties && saveStatus === 'saving'" class="text-xs text-ink-3">Saving…</span>
+            <span v-else-if="!collapseProperties && saveStatus === 'saved'" class="text-xs text-success font-medium">Saved ✓</span>
+            <span v-else-if="!collapseProperties && saveStatus === 'error'" class="text-xs text-danger">Error</span>
           </transition>
         </span>
         <svg class="w-3 h-3 transition-transform duration-200" :class="!collapseProperties ? 'rotate-90' : ''" fill="currentColor" viewBox="0 0 20 20">
@@ -93,12 +93,12 @@
 
       <div v-if="!collapseProperties" class="space-y-4">
         <div>
-          <label class="block text-xs text-gray-500 mb-1">Title</label>
+          <label class="block text-xs text-label mb-1">Title</label>
           <input
             v-model="fields.title"
             type="text"
             placeholder="Album title…"
-            class="w-full text-sm text-gray-900 bg-gray-50 border border-transparent rounded px-2.5 py-1.5 focus:outline-none focus:border-gray-300 focus:bg-white placeholder-gray-300 transition-colors"
+            class="w-full text-sm text-ink bg-surface-sunken border border-transparent rounded px-2.5 py-1.5 focus:outline-none focus:border-line-strong focus:bg-surface placeholder:text-ink-3 transition-colors"
             @blur="save"
             @keydown.enter.prevent="$event.target.blur()"
           />
@@ -107,70 +107,70 @@
         <!-- Slug field -->
         <div>
           <div class="flex items-center justify-between mb-1">
-            <label class="block text-xs text-gray-500">Slug</label>
+            <label class="block text-xs text-label">Slug</label>
             <transition name="fade">
-              <span v-if="slugStatus === 'checking'" class="text-xs text-gray-400">Checking…</span>
-              <span v-else-if="slugStatus === 'saving'" class="text-xs text-gray-400">Saving…</span>
-              <span v-else-if="slugStatus === 'saved'" class="text-xs text-green-600 font-medium">Saved ✓</span>
+              <span v-if="slugStatus === 'checking'" class="text-xs text-ink-3">Checking…</span>
+              <span v-else-if="slugStatus === 'saving'" class="text-xs text-ink-3">Saving…</span>
+              <span v-else-if="slugStatus === 'saved'" class="text-xs text-success font-medium">Saved ✓</span>
             </transition>
           </div>
           <input
             v-model="fields.slug"
             type="text"
             placeholder="my-album-slug"
-            class="w-full text-sm text-gray-900 bg-gray-50 border rounded px-2.5 py-1.5 focus:outline-none focus:bg-white placeholder-gray-300 transition-colors"
+            class="w-full text-sm text-ink bg-surface-sunken border rounded px-2.5 py-1.5 focus:outline-none focus:bg-surface placeholder:text-ink-3 transition-colors"
             :class="slugError
-              ? 'border-red-300 focus:border-red-400'
-              : 'border-transparent focus:border-gray-300'"
+              ? 'border-danger focus:border-danger'
+              : 'border-transparent focus:border-line-strong'"
             @blur="saveSlug"
             @keydown.enter.prevent="$event.target.blur()"
             @input="fields.slug = normalizeSlug($event.target.value); slugError = null; slugStatus = null"
           />
           <transition name="fade">
-            <p v-if="slugError" class="mt-1 text-xs text-red-500">{{ slugError }}</p>
-            <p v-else class="mt-1 text-xs text-gray-400">Used in the public URL</p>
+            <p v-if="slugError" class="mt-1 text-xs text-danger">{{ slugError }}</p>
+            <p v-else class="mt-1 text-xs text-ink-3">Used in the public URL</p>
           </transition>
         </div>
 
         <div>
-          <label class="block text-xs text-gray-500 mb-1">Subtitle</label>
+          <label class="block text-xs text-label mb-1">Subtitle</label>
           <input
             v-model="fields.subtitle"
             type="text"
             placeholder="Shown under the title on cards"
-            class="w-full text-sm text-gray-900 bg-gray-50 border border-transparent rounded px-2.5 py-1.5 focus:outline-none focus:border-gray-300 focus:bg-white placeholder-gray-300 transition-colors"
+            class="w-full text-sm text-ink bg-surface-sunken border border-transparent rounded px-2.5 py-1.5 focus:outline-none focus:border-line-strong focus:bg-surface placeholder:text-ink-3 transition-colors"
             @blur="save"
             @keydown.enter.prevent="$event.target.blur()"
           />
         </div>
 
         <div>
-          <label class="block text-xs text-gray-500 mb-1">Description</label>
+          <label class="block text-xs text-label mb-1">Description</label>
           <textarea
             v-model="fields.description"
             rows="4"
             placeholder="Add a description…"
-            class="w-full text-sm text-gray-900 bg-gray-50 border border-transparent rounded px-2.5 py-1.5 focus:outline-none focus:border-gray-300 focus:bg-white placeholder-gray-300 transition-colors resize-none"
+            class="w-full text-sm text-ink bg-surface-sunken border border-transparent rounded px-2.5 py-1.5 focus:outline-none focus:border-line-strong focus:bg-surface placeholder:text-ink-3 transition-colors resize-none"
             @blur="save"
           />
         </div>
 
         <!-- Sets declare the vocabulary; albums pick from their parent's -->
         <div v-if="album.album_type === 1">
-          <label class="block text-xs text-gray-500 mb-1">Categories</label>
+          <label class="block text-xs text-label mb-1">Categories</label>
           <input
             v-model="fields.categories"
             type="text"
             placeholder="Travel, Nature, Fashion"
-            class="w-full text-sm text-gray-900 bg-gray-50 border border-transparent rounded px-2.5 py-1.5 focus:outline-none focus:border-gray-300 focus:bg-white placeholder-gray-300 transition-colors"
+            class="w-full text-sm text-ink bg-surface-sunken border border-transparent rounded px-2.5 py-1.5 focus:outline-none focus:border-line-strong focus:bg-surface placeholder:text-ink-3 transition-colors"
             @blur="save"
             @keydown.enter.prevent="$event.target.blur()"
           />
-          <p class="mt-1 text-xs text-gray-400">Comma-separated. Albums inside this set can be grouped by these.</p>
+          <p class="mt-1 text-xs text-ink-3">Comma-separated. Albums inside this set can be grouped by these.</p>
         </div>
 
         <div v-else>
-          <label class="block text-xs text-gray-500 mb-1">Category</label>
+          <label class="block text-xs text-label mb-1">Category</label>
 
           <!-- Picked from the parent set's vocabulary, like Kirby's
                `options: query / page.parent.categories.split`. -->
@@ -181,13 +181,13 @@
               type="button"
               class="px-2 py-0.5 text-xs rounded-full border transition-colors"
               :class="selectedCategories.includes(name)
-                ? 'bg-gray-900 text-white border-gray-900'
-                : 'bg-gray-50 text-gray-600 border-gray-200 hover:border-gray-300'"
+                ? 'bg-gray-fill text-gray-on-fill border-gray-fill'
+                : 'bg-surface-sunken text-ink-2 border-line hover:border-line-strong'"
               @click="toggleCategory(name)"
             >{{ name }}</button>
           </div>
 
-          <p v-else class="text-xs text-gray-400">
+          <p v-else class="text-xs text-ink-3">
             No categories yet — add them on the parent set to pick from here.
           </p>
         </div>
@@ -203,7 +203,7 @@
         class="flex items-center justify-between w-full mb-3 group"
         @click="collapseDisplay = !collapseDisplay"
       >
-        <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Layout</h3>
+        <h3 class="text-xs font-semibold text-label uppercase tracking-wider">Layout</h3>
         <svg class="w-3 h-3 transition-transform duration-200" :class="!collapseDisplay ? 'rotate-90' : ''" fill="currentColor" viewBox="0 0 20 20">
           <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
         </svg>
@@ -211,10 +211,10 @@
 
       <div v-if="!collapseDisplay" class="space-y-4">
         <div v-if="album.album_type !== 1">
-          <label class="block text-xs text-gray-500 mb-1">Layout</label>
+          <label class="block text-xs text-label mb-1">Layout</label>
           <select
             :value="fields.layout"
-            class="w-full text-sm text-gray-900 bg-gray-50 border border-transparent rounded px-2.5 py-1.5 focus:outline-none focus:border-gray-300 focus:bg-white transition-colors"
+            class="w-full text-sm text-ink bg-surface-sunken border border-transparent rounded px-2.5 py-1.5 focus:outline-none focus:border-line-strong focus:bg-surface transition-colors"
             @change="changeLayout($event.target.value)"
           >
             <option value="grid">Grid</option>
@@ -223,30 +223,30 @@
           </select>
         </div>
 
-        <label class="flex items-center gap-2 text-sm text-gray-700">
-          <input v-model="fields.fullwidth" type="checkbox" class="rounded border-gray-300" @change="save" />
+        <label class="flex items-center gap-2 text-sm text-ink-2">
+          <input v-model="fields.fullwidth" type="checkbox" class="rounded border-line-strong" @change="save" />
           Fullwidth
         </label>
 
         <!-- Set: album-cover card grid -->
         <div v-if="album.album_type === 1">
-          <label class="block text-xs text-gray-500 mb-1">Grid gap <span class="text-gray-400">(1–15 px)</span></label>
+          <label class="block text-xs text-label mb-1">Grid gap <span class="text-ink-3">(1–15 px)</span></label>
           <input
             v-model.number="options.gap"
             type="range" min="1" max="15" step="1"
             class="w-full"
             @change="save"
           />
-          <p class="mt-1 text-xs text-gray-400">{{ options.gap }} px between album covers</p>
+          <p class="mt-1 text-xs text-ink-3">{{ options.gap }} px between album covers</p>
         </div>
 
         <!-- Grid -->
         <template v-if="album.album_type !== 1 && fields.layout === 'grid'">
           <div>
-            <label class="block text-xs text-gray-500 mb-1">Grid mode</label>
+            <label class="block text-xs text-label mb-1">Grid mode</label>
             <select
               v-model="options.mode"
-              class="w-full text-sm text-gray-900 bg-gray-50 border border-transparent rounded px-2.5 py-1.5 focus:outline-none focus:border-gray-300 focus:bg-white transition-colors"
+              class="w-full text-sm text-ink bg-surface-sunken border border-transparent rounded px-2.5 py-1.5 focus:outline-none focus:border-line-strong focus:bg-surface transition-colors"
               @change="save"
             >
               <option value="original">Original</option>
@@ -254,43 +254,43 @@
               <option value="landscape">Landscape</option>
               <option value="portrait">Portrait</option>
             </select>
-            <p v-if="options.mode === 'original'" class="mt-1 text-xs text-gray-400">
+            <p v-if="options.mode === 'original'" class="mt-1 text-xs text-ink-3">
               Justified rows — each photo keeps its own ratio.
             </p>
           </div>
 
           <div v-if="options.mode !== 'original'">
-            <label class="block text-xs text-gray-500 mb-1">Columns <span class="text-gray-400">(2–8)</span></label>
+            <label class="block text-xs text-label mb-1">Columns <span class="text-ink-3">(2–8)</span></label>
             <input
               v-model.number="options.columns"
               type="range" min="2" max="8" step="1"
               class="w-full"
               @change="save"
             />
-            <p class="mt-1 text-xs text-gray-400">{{ options.columns }} columns</p>
+            <p class="mt-1 text-xs text-ink-3">{{ options.columns }} columns</p>
           </div>
 
           <div>
-            <label class="block text-xs text-gray-500 mb-1">Gap <span class="text-gray-400">(1–15 px)</span></label>
+            <label class="block text-xs text-label mb-1">Gap <span class="text-ink-3">(1–15 px)</span></label>
             <input
               v-model.number="options.gap"
               type="range" min="1" max="15" step="1"
               class="w-full"
               @change="save"
             />
-            <p class="mt-1 text-xs text-gray-400">{{ options.gap }} px</p>
+            <p class="mt-1 text-xs text-ink-3">{{ options.gap }} px</p>
           </div>
         </template>
 
         <!-- Slider -->
         <template v-if="album.album_type !== 1 && fields.layout === 'slider'">
-          <label class="flex items-center gap-2 text-sm text-gray-700">
-            <input v-model="options.pagedots" type="checkbox" class="rounded border-gray-300" @change="save" />
+          <label class="flex items-center gap-2 text-sm text-ink-2">
+            <input v-model="options.pagedots" type="checkbox" class="rounded border-line-strong" @change="save" />
             Page dots
           </label>
 
-          <label class="flex items-center gap-2 text-sm text-gray-700">
-            <input v-model="options.autoplay" type="checkbox" class="rounded border-gray-300" @change="save" />
+          <label class="flex items-center gap-2 text-sm text-ink-2">
+            <input v-model="options.autoplay" type="checkbox" class="rounded border-line-strong" @change="save" />
             Autoplay
           </label>
 
@@ -299,10 +299,10 @@
         <!-- List -->
         <template v-if="album.album_type !== 1 && fields.layout === 'list'">
           <div>
-            <label class="block text-xs text-gray-500 mb-1">Caption alignment</label>
+            <label class="block text-xs text-label mb-1">Caption alignment</label>
             <select
               v-model="options.caption_align"
-              class="w-full text-sm text-gray-900 bg-gray-50 border border-transparent rounded px-2.5 py-1.5 focus:outline-none focus:border-gray-300 focus:bg-white transition-colors"
+              class="w-full text-sm text-ink bg-surface-sunken border border-transparent rounded px-2.5 py-1.5 focus:outline-none focus:border-line-strong focus:bg-surface transition-colors"
               @change="save"
             >
               <option value="left">Left</option>
@@ -316,9 +316,9 @@
              has no lightbox, so there it is flickity's autoplay interval and
              only applies while autoplay is on. -->
         <div v-if="album.album_type !== 1 && (fields.layout !== 'slider' || options.autoplay)">
-          <label class="block text-xs text-gray-500 mb-1">
+          <label class="block text-xs text-label mb-1">
             {{ fields.layout === 'slider' ? 'Autoplay interval' : 'Slideshow speed' }}
-            <span class="text-gray-400">({{ (options.speed / 1000).toFixed(1) }}s)</span>
+            <span class="text-ink-3">({{ (options.speed / 1000).toFixed(1) }}s)</span>
           </label>
           <input
             v-model.number="options.speed"
@@ -337,7 +337,7 @@
         class="flex items-center justify-between w-full mb-3 group"
         @click="collapseDetails = !collapseDetails"
       >
-        <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Details</h3>
+        <h3 class="text-xs font-semibold text-label uppercase tracking-wider">Details</h3>
         <svg class="w-3 h-3 transition-transform duration-200" :class="!collapseDetails ? 'rotate-90' : ''" fill="currentColor" viewBox="0 0 20 20">
           <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
         </svg>
@@ -345,16 +345,16 @@
 
       <dl v-if="!collapseDetails" class="space-y-2.5 text-sm">
         <div class="flex justify-between">
-          <dt class="text-gray-500">Type</dt>
-          <dd class="text-gray-900 font-medium">{{ album.album_type === 1 ? 'Set' : 'Album' }}</dd>
+          <dt class="text-ink-3">Type</dt>
+          <dd class="text-ink font-medium">{{ album.album_type === 1 ? 'Set' : 'Album' }}</dd>
         </div>
         <div class="flex items-center justify-between">
-          <dt class="text-gray-500">Visibility</dt>
+          <dt class="text-ink-3">Visibility</dt>
           <dd>
             <button
               type="button"
               class="inline-flex items-center gap-1.5 text-sm font-medium transition-colors"
-              :class="fields.visibility === 'public' ? 'text-green-600 hover:text-green-700' : 'text-gray-400 hover:text-gray-600'"
+              :class="fields.visibility === 'public' ? 'text-success hover:text-success-hover' : 'text-ink-3 hover:text-ink-2'"
               @click="toggleVisibility"
             >
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -366,16 +366,16 @@
           </dd>
         </div>
         <div class="flex justify-between">
-          <dt class="text-gray-500">Items</dt>
-          <dd class="text-gray-900 font-medium">{{ album.album_type === 1 ? (Array.isArray(childAlbums) ? childAlbums.length : 0) : album.media_count }}</dd>
+          <dt class="text-ink-3">Items</dt>
+          <dd class="text-ink font-medium">{{ album.album_type === 1 ? (Array.isArray(childAlbums) ? childAlbums.length : 0) : album.media_count }}</dd>
         </div>
         <div class="flex justify-between">
-          <dt class="text-gray-500">Created</dt>
-          <dd class="text-gray-900 font-medium">{{ formatDate(album.created_at) }}</dd>
+          <dt class="text-ink-3">Created</dt>
+          <dd class="text-ink font-medium">{{ formatDate(album.created_at) }}</dd>
         </div>
         <div class="flex justify-between">
-          <dt class="text-gray-500">Modified</dt>
-          <dd class="text-gray-900 font-medium">{{ formatDate(album.updated_at) }}</dd>
+          <dt class="text-ink-3">Modified</dt>
+          <dd class="text-ink font-medium">{{ formatDate(album.updated_at) }}</dd>
         </div>
       </dl>
     </div>
@@ -386,8 +386,8 @@
         type="button"
         class="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm border rounded-lg transition-colors"
         :class="inMenu
-          ? 'text-gray-400 border-gray-200 cursor-default'
-          : 'text-gray-600 border-gray-200 hover:bg-gray-50'"
+          ? 'text-ink-3 border-line cursor-default'
+          : 'text-ink-2 border-line hover:bg-hover'"
         :disabled="inMenu || addingToMenu"
         @click="addToMenu"
       >
@@ -400,7 +400,7 @@
       <a
         v-if="inMenu"
         :href="panelUrl('/navigation')"
-        class="mt-2 block text-center text-xs text-gray-400 hover:text-gray-600"
+        class="mt-2 block text-center text-xs text-ink-3 hover:text-ink-2"
       >
         Edit navigation
       </a>
@@ -412,7 +412,7 @@
         :href="portfolioUrl"
         target="_blank"
         rel="noopener noreferrer"
-        class="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+        class="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm text-ink-2 border border-line rounded-lg hover:bg-hover transition-colors"
       >
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
@@ -425,7 +425,7 @@
     <div class="px-5 py-4">
       <button
         @click="$emit('delete')"
-        class="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors"
+        class="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm text-danger border border-danger-surface-strong rounded-lg hover:bg-danger-surface transition-colors"
       >
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />

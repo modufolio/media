@@ -5,7 +5,7 @@
       <!-- Insertion line ABOVE this item -->
       <div
         v-show="dropState.dropIndex === index"
-        class="h-0.5 mx-3 rounded-full bg-primary-400 pointer-events-none"
+        class="h-0.5 mx-3 rounded-full bg-primary pointer-events-none"
       />
 
       <!-- Dragover zone (only the row wrapper, not the subtree) -->
@@ -32,7 +32,7 @@
     <!-- Insertion line AFTER the last item -->
     <div
       v-show="dropState.dropIndex === items.length"
-      class="h-0.5 mx-3 rounded-full bg-primary-400 pointer-events-none"
+      class="h-0.5 mx-3 rounded-full bg-primary pointer-events-none"
     />
   </div>
 </template>

@@ -1,13 +1,13 @@
 <template>
   <div class="ui-field-image" :class="widthClass">
     <div class="flex items-center justify-between mb-1.5">
-      <label v-if="label" :for="id" class="ui-field-label block text-sm font-medium text-gray-700">
+      <label v-if="label" :for="id" class="ui-field-label block text-sm font-medium text-label">
         {{ label }}
       </label>
       <button
         v-if="preview"
         type="button"
-        class="text-xs font-medium text-gray-500 hover:text-gray-700 transition-colors"
+        class="text-xs font-medium text-ink-3 hover:text-ink-2 transition-colors"
         @click="pickerOpen = true"
       >Change</button>
     </div>
@@ -17,7 +17,7 @@
       v-if="!preview"
       :id="id"
       type="button"
-      class="w-full aspect-square rounded-lg border-2 border-dashed border-gray-200 bg-gray-50 text-gray-400 hover:border-gray-300 hover:text-gray-500 transition-colors flex flex-col items-center justify-center gap-2"
+      class="w-full aspect-square rounded-lg border-2 border-dashed border-line bg-surface-sunken text-ink-3 hover:border-line-strong hover:text-ink-2 transition-colors flex flex-col items-center justify-center gap-2"
       @click="pickerOpen = true"
     >
       <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -28,19 +28,19 @@
     </button>
 
     <!-- Filled: preview above, file details and the remove action below. -->
-    <div v-else class="rounded-lg border border-gray-200 overflow-hidden bg-white">
-      <img :src="preview" :alt="alt" class="w-full aspect-square object-cover bg-gray-100" />
+    <div v-else class="rounded-lg border border-line overflow-hidden bg-surface">
+      <img :src="preview" :alt="alt" class="w-full aspect-square object-cover bg-media-placeholder" />
 
-      <div class="flex items-center justify-between gap-3 px-3 py-2 border-t border-gray-100">
+      <div class="flex items-center justify-between gap-3 px-3 py-2 border-t border-line">
         <div class="min-w-0">
-          <p class="truncate text-xs text-gray-700">{{ filename || 'Selected image' }}</p>
-          <p v-if="dimensions" class="text-xs text-gray-400">{{ dimensions }}</p>
+          <p class="truncate text-xs text-ink-2">{{ filename || 'Selected image' }}</p>
+          <p v-if="dimensions" class="text-xs text-ink-3">{{ dimensions }}</p>
         </div>
 
         <button
           type="button"
           title="Remove image"
-          class="shrink-0 p-1.5 rounded text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+          class="shrink-0 p-1.5 rounded text-ink-3 hover:text-danger hover:bg-danger-surface transition-colors"
           @click="clear"
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -51,14 +51,14 @@
       </div>
     </div>
 
-    <p v-if="missing" class="mt-1.5 text-xs text-amber-600">
+    <p v-if="missing" class="mt-1.5 text-xs text-warning">
       This image is no longer in the media library.
     </p>
-    <p v-else-if="isLegacyUrl" class="mt-1.5 text-xs text-amber-600">
+    <p v-else-if="isLegacyUrl" class="mt-1.5 text-xs text-warning">
       Stored as a URL. Pick the image again to store a reference instead.
     </p>
-    <p v-if="help" class="mt-1.5 text-xs text-gray-400">{{ help }}</p>
-    <p v-if="error" class="mt-1.5 text-xs text-red-500">{{ error }}</p>
+    <p v-if="help" class="mt-1.5 text-xs text-ink-3">{{ help }}</p>
+    <p v-if="error" class="mt-1.5 text-xs text-danger">{{ error }}</p>
 
     <MediaPickerDialog :is-open="pickerOpen" @close="pickerOpen = false" @select="select" />
   </div>

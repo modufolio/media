@@ -1,5 +1,5 @@
 <template>
-  <div class="bg-white rounded-lg shadow divide-y divide-gray-100 self-start">
+  <div class="bg-surface rounded-lg shadow divide-y divide-line self-start">
 
     <!-- ── Single-media inspector ─────────────────────────────── -->
     <template v-if="media">
@@ -7,7 +7,7 @@
       <!-- Thumbnail preview -->
       <div class="px-5 py-4">
         <div
-          class="rounded-lg overflow-hidden bg-gray-100 cursor-pointer"
+          class="rounded-lg overflow-hidden bg-media-placeholder cursor-pointer"
           :style="media.is_image && media.width && media.height
             ? { aspectRatio: `${media.width} / ${media.height}` }
             : { aspectRatio: '16 / 9' }"
@@ -20,12 +20,12 @@
             class="w-full h-full object-cover"
           />
           <div v-else class="w-full h-full flex items-center justify-center">
-            <svg class="w-12 h-12 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-12 h-12 text-media-placeholder-ink" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
             </svg>
           </div>
         </div>
-        <p class="mt-2 text-sm text-gray-700 font-medium truncate">{{ media.original_filename }}</p>
+        <p class="mt-2 text-sm text-ink-2 font-medium truncate">{{ media.original_filename }}</p>
       </div>
 
       <!-- File info -->
@@ -35,27 +35,27 @@
           class="flex items-center justify-between w-full mb-3 group"
           @click="collapseFileInfo = !collapseFileInfo"
         >
-          <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider">File info</h3>
+          <h3 class="text-xs font-semibold text-label uppercase tracking-wider">File info</h3>
           <svg class="w-3 h-3 transition-transform duration-200" :class="!collapseFileInfo ? 'rotate-90' : ''" fill="currentColor" viewBox="0 0 20 20">
             <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
           </svg>
         </button>
         <dl v-if="!collapseFileInfo" class="space-y-2.5 text-sm">
           <div v-if="media.width && media.height" class="flex justify-between">
-            <dt class="text-gray-500">Dimensions</dt>
-            <dd class="text-gray-900 font-medium">{{ media.width }} × {{ media.height }}</dd>
+            <dt class="text-ink-3">Dimensions</dt>
+            <dd class="text-ink font-medium">{{ media.width }} × {{ media.height }}</dd>
           </div>
           <div class="flex justify-between">
-            <dt class="text-gray-500">File size</dt>
-            <dd class="text-gray-900 font-medium">{{ formatBytes(media.file_size) }}</dd>
+            <dt class="text-ink-3">File size</dt>
+            <dd class="text-ink font-medium">{{ formatBytes(media.file_size) }}</dd>
           </div>
           <div class="flex justify-between">
-            <dt class="text-gray-500">Type</dt>
-            <dd class="text-gray-900 font-medium">{{ media.mime_type }}</dd>
+            <dt class="text-ink-3">Type</dt>
+            <dd class="text-ink font-medium">{{ media.mime_type }}</dd>
           </div>
           <div class="flex justify-between">
-            <dt class="text-gray-500">Uploaded</dt>
-            <dd class="text-gray-900 font-medium">{{ formatDate(media.created_at) }}</dd>
+            <dt class="text-ink-3">Uploaded</dt>
+            <dd class="text-ink font-medium">{{ formatDate(media.created_at) }}</dd>
           </div>
         </dl>
       </div>
@@ -63,11 +63,11 @@
       <!-- Rating -->
       <div class="px-5 py-4">
         <div class="flex items-center justify-between mb-2">
-          <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Rating</h3>
+          <h3 class="text-xs font-semibold text-label uppercase tracking-wider">Rating</h3>
           <button
             v-if="localRating !== null"
             type="button"
-            class="text-xs text-gray-400 hover:text-red-500 transition-colors"
+            class="text-xs text-ink-3 hover:text-danger transition-colors"
             @click="saveRating(null)"
           >Clear</button>
         </div>
@@ -84,7 +84,7 @@
           >
             <svg
               class="w-5 h-5 transition-colors"
-              :class="(hoverRating ?? localRating ?? 0) >= star ? 'text-amber-400' : 'text-gray-200'"
+              :class="(hoverRating ?? localRating ?? 0) >= star ? 'text-media-star' : 'text-media-star-empty'"
               fill="currentColor"
               viewBox="0 0 24 24"
             >
@@ -102,11 +102,11 @@
           @click="collapseMetadata = !collapseMetadata"
         >
           <span class="flex items-center gap-2">
-            <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Metadata</h3>
+            <h3 class="text-xs font-semibold text-label uppercase tracking-wider">Metadata</h3>
             <transition name="fade">
-              <span v-if="!collapseMetadata && saveStatus === 'saving'" class="text-xs text-gray-400">Saving…</span>
-              <span v-else-if="!collapseMetadata && saveStatus === 'saved'" class="text-xs text-green-600 font-medium">Saved ✓</span>
-              <span v-else-if="!collapseMetadata && saveStatus === 'error'" class="text-xs text-red-500">Error</span>
+              <span v-if="!collapseMetadata && saveStatus === 'saving'" class="text-xs text-ink-3">Saving…</span>
+              <span v-else-if="!collapseMetadata && saveStatus === 'saved'" class="text-xs text-success font-medium">Saved ✓</span>
+              <span v-else-if="!collapseMetadata && saveStatus === 'error'" class="text-xs text-danger">Error</span>
             </transition>
           </span>
           <svg class="w-3 h-3 transition-transform duration-200" :class="!collapseMetadata ? 'rotate-90' : ''" fill="currentColor" viewBox="0 0 20 20">
@@ -116,34 +116,34 @@
 
         <div v-if="!collapseMetadata" class="space-y-4">
           <div>
-            <label class="block text-xs text-gray-500 mb-1">Title</label>
+            <label class="block text-xs text-label mb-1">Title</label>
             <input
               v-model="fields.title"
               type="text"
               placeholder="Add a title…"
-              class="w-full text-sm text-gray-900 bg-gray-50 border border-transparent rounded px-2.5 py-1.5 focus:outline-none focus:border-gray-300 focus:bg-white placeholder-gray-300 transition-colors"
+              class="w-full text-sm text-ink bg-surface-sunken border border-transparent rounded px-2.5 py-1.5 focus:outline-none focus:border-line-strong focus:bg-surface placeholder:text-ink-3 transition-colors"
               @blur="save('title', fields.title)"
               @keydown.enter.prevent="$event.target.blur()"
             />
           </div>
           <div>
-            <label class="block text-xs text-gray-500 mb-1">Alt text</label>
+            <label class="block text-xs text-label mb-1">Alt text</label>
             <input
               v-model="fields.alt_text"
               type="text"
               placeholder="Describe the image…"
-              class="w-full text-sm text-gray-900 bg-gray-50 border border-transparent rounded px-2.5 py-1.5 focus:outline-none focus:border-gray-300 focus:bg-white placeholder-gray-300 transition-colors"
+              class="w-full text-sm text-ink bg-surface-sunken border border-transparent rounded px-2.5 py-1.5 focus:outline-none focus:border-line-strong focus:bg-surface placeholder:text-ink-3 transition-colors"
               @blur="save('alt_text', fields.alt_text)"
               @keydown.enter.prevent="$event.target.blur()"
             />
           </div>
           <div>
-            <label class="block text-xs text-gray-500 mb-1">Caption</label>
+            <label class="block text-xs text-label mb-1">Caption</label>
             <textarea
               v-model="fields.caption"
               placeholder="Add a caption…"
               rows="3"
-              class="w-full text-sm text-gray-900 bg-gray-50 border border-transparent rounded px-2.5 py-1.5 focus:outline-none focus:border-gray-300 focus:bg-white placeholder-gray-300 transition-colors resize-none"
+              class="w-full text-sm text-ink bg-surface-sunken border border-transparent rounded px-2.5 py-1.5 focus:outline-none focus:border-line-strong focus:bg-surface placeholder:text-ink-3 transition-colors resize-none"
               @blur="save('caption', fields.caption)"
             />
           </div>
@@ -152,17 +152,17 @@
 
       <!-- Tags -->
       <div class="px-5 py-4">
-        <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Tags</h3>
+        <h3 class="text-xs font-semibold text-label uppercase tracking-wider mb-3">Tags</h3>
         <div class="flex items-center gap-1.5 flex-wrap">
           <span
             v-for="tag in mediaTags"
             :key="tag.id"
-            class="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-700"
+            class="inline-flex items-center gap-1 rounded-full bg-gray-surface px-2.5 py-0.5 text-xs font-medium text-gray-on-surface"
           >
             {{ tag.name }}
             <button
               type="button"
-              class="text-gray-400 hover:text-red-500 transition-colors"
+              class="text-ink-3 hover:text-danger transition-colors"
               @click="emit('detach-tag', tag.id)"
             >
               <svg class="w-3 h-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
@@ -175,7 +175,7 @@
             <div v-if="showTagDropdown" class="fixed inset-0 z-[40]" @click="emit('update:showTagDropdown', false)" />
             <button
               type="button"
-              class="inline-flex items-center gap-1 rounded-full border border-dashed border-gray-300 px-2.5 py-0.5 text-xs font-medium text-gray-500 hover:border-gray-400 hover:text-gray-700 transition-colors"
+              class="inline-flex items-center gap-1 rounded-full border border-dashed border-line px-2.5 py-0.5 text-xs font-medium text-ink-3 hover:border-line-strong hover:text-ink-2 transition-colors"
               @click="emit('open-tag-dropdown')"
             >
               <svg class="w-3 h-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
@@ -185,13 +185,13 @@
             </button>
             <div
               v-if="showTagDropdown"
-              class="absolute left-0 top-7 z-[50] w-48 rounded-lg border border-gray-200 bg-white shadow-lg overflow-hidden"
+              class="absolute left-0 top-7 z-[50] w-48 rounded-lg border border-line bg-surface-raised shadow-lg overflow-hidden"
             >
               <input
                 :value="tagSearch"
                 type="text"
                 placeholder="Search or create…"
-                class="w-full px-3 py-2 text-sm border-b border-gray-100 focus:outline-none"
+                class="w-full px-3 py-2 text-sm bg-surface-raised text-ink border-b border-line placeholder:text-ink-3 focus:outline-none"
                 @input="emit('update:tagSearch', $event.target.value)"
               />
               <div class="max-h-40 overflow-y-auto">
@@ -199,7 +199,7 @@
                   v-for="tag in filteredAvailableTags"
                   :key="tag.id"
                   type="button"
-                  class="block w-full px-3 py-1.5 text-left text-sm text-gray-700 hover:bg-gray-50"
+                  class="block w-full px-3 py-1.5 text-left text-sm text-ink-2 hover:bg-hover"
                   @click="emit('attach-tag', tag.id)"
                 >
                   {{ tag.name }}
@@ -207,12 +207,12 @@
                 <button
                   v-if="canCreateTag"
                   type="button"
-                  class="block w-full px-3 py-1.5 text-left text-sm text-primary-600 font-medium hover:bg-gray-50"
+                  class="block w-full px-3 py-1.5 text-left text-sm text-primary font-medium hover:bg-hover"
                   @click="emit('create-tag', tagSearch)"
                 >
                   Create "{{ tagSearch }}"
                 </button>
-                <p v-if="filteredAvailableTags.length === 0 && !canCreateTag" class="px-3 py-2 text-xs text-gray-400">
+                <p v-if="filteredAvailableTags.length === 0 && !canCreateTag" class="px-3 py-2 text-xs text-ink-3">
                   No tags available
                 </p>
               </div>
@@ -223,43 +223,43 @@
 
       <!-- EXIF / Camera metadata -->
       <div v-if="exifData" class="px-5 py-4">
-        <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Camera</h3>
+        <h3 class="text-xs font-semibold text-label uppercase tracking-wider mb-3">Camera</h3>
         <dl class="space-y-2.5 text-sm">
           <div v-if="exifData.model" class="flex justify-between">
-            <dt class="text-gray-500">Camera</dt>
-            <dd class="text-gray-900 font-medium text-right max-w-[140px] truncate" :title="exifData.model">{{ exifData.model }}</dd>
+            <dt class="text-ink-3">Camera</dt>
+            <dd class="text-ink font-medium text-right max-w-[140px] truncate" :title="exifData.model">{{ exifData.model }}</dd>
           </div>
           <div v-if="exifData.aperture" class="flex justify-between">
-            <dt class="text-gray-500">Aperture</dt>
-            <dd class="text-gray-900 font-medium">{{ exifData.aperture }}</dd>
+            <dt class="text-ink-3">Aperture</dt>
+            <dd class="text-ink font-medium">{{ exifData.aperture }}</dd>
           </div>
           <div v-if="exifData.shutter" class="flex justify-between">
-            <dt class="text-gray-500">Shutter</dt>
-            <dd class="text-gray-900 font-medium">{{ exifData.shutter }}</dd>
+            <dt class="text-ink-3">Shutter</dt>
+            <dd class="text-ink font-medium">{{ exifData.shutter }}</dd>
           </div>
           <div v-if="exifData.iso" class="flex justify-between">
-            <dt class="text-gray-500">ISO</dt>
-            <dd class="text-gray-900 font-medium">{{ exifData.iso }}</dd>
+            <dt class="text-ink-3">ISO</dt>
+            <dd class="text-ink font-medium">{{ exifData.iso }}</dd>
           </div>
           <div v-if="exifData.focalLength" class="flex justify-between">
-            <dt class="text-gray-500">Focal length</dt>
-            <dd class="text-gray-900 font-medium">{{ exifData.focalLength }}</dd>
+            <dt class="text-ink-3">Focal length</dt>
+            <dd class="text-ink font-medium">{{ exifData.focalLength }}</dd>
           </div>
           <div v-if="exifData.taken" class="flex justify-between">
-            <dt class="text-gray-500">Taken</dt>
-            <dd class="text-gray-900 font-medium">{{ exifData.taken }}</dd>
+            <dt class="text-ink-3">Taken</dt>
+            <dd class="text-ink font-medium">{{ exifData.taken }}</dd>
           </div>
         </dl>
       </div>
 
       <!-- Site link + visibility -->
       <div class="px-5 py-4">
-        <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Site</h3>
+        <h3 class="text-xs font-semibold text-label uppercase tracking-wider mb-3">Site</h3>
         <div class="space-y-3">
           <a
             :href="media.url"
             target="_blank"
-            class="flex items-center gap-2 text-sm text-primary-600 hover:text-primary-700 font-medium transition-colors"
+            class="flex items-center gap-2 text-sm text-primary hover:text-primary-hover font-medium transition-colors"
           >
             <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
@@ -267,11 +267,11 @@
             Link
           </a>
           <div class="flex items-center justify-between">
-            <span class="text-sm text-gray-500">Visibility</span>
+            <span class="text-sm text-ink-3">Visibility</span>
             <button
               type="button"
               class="inline-flex items-center gap-1.5 text-sm font-medium transition-colors"
-              :class="isPublic ? 'text-green-600 hover:text-green-700' : 'text-gray-400 hover:text-gray-600'"
+              :class="isPublic ? 'text-success hover:text-success-hover' : 'text-ink-3 hover:text-ink-2'"
               @click="togglePublic"
             >
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -291,8 +291,8 @@
 
       <!-- Header -->
       <div class="px-5 py-4">
-        <p class="text-xs text-gray-500 leading-relaxed">
-          <span class="font-semibold text-gray-700">{{ selectedIds.length }} items selected.</span>
+        <p class="text-xs text-ink-3 leading-relaxed">
+          <span class="font-semibold text-ink">{{ selectedIds.length }} items selected.</span>
           Edits below apply to all.
         </p>
       </div>
@@ -300,43 +300,43 @@
       <!-- Bulk metadata -->
       <div class="px-5 py-4">
         <div class="flex items-center justify-between mb-3">
-          <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Metadata</h3>
+          <h3 class="text-xs font-semibold text-label uppercase tracking-wider">Metadata</h3>
           <transition name="fade">
-            <span v-if="bulkSaveStatus === 'saving'" class="text-xs text-gray-400">Saving…</span>
-            <span v-else-if="bulkSaveStatus === 'saved'" class="text-xs text-green-600 font-medium">Saved ✓</span>
-            <span v-else-if="bulkSaveStatus === 'error'" class="text-xs text-red-500">Error</span>
+            <span v-if="bulkSaveStatus === 'saving'" class="text-xs text-ink-3">Saving…</span>
+            <span v-else-if="bulkSaveStatus === 'saved'" class="text-xs text-success font-medium">Saved ✓</span>
+            <span v-else-if="bulkSaveStatus === 'error'" class="text-xs text-danger">Error</span>
           </transition>
         </div>
         <div class="space-y-4">
           <div>
-            <label class="block text-xs text-gray-500 mb-1">Title</label>
+            <label class="block text-xs text-label mb-1">Title</label>
             <input
               v-model="bulkFields.title"
               type="text"
               placeholder="Add a title…"
-              class="w-full text-sm text-gray-900 bg-gray-50 border border-transparent rounded px-2.5 py-1.5 focus:outline-none focus:border-gray-300 focus:bg-white placeholder-gray-300 transition-colors"
+              class="w-full text-sm text-ink bg-surface-sunken border border-transparent rounded px-2.5 py-1.5 focus:outline-none focus:border-line-strong focus:bg-surface placeholder:text-ink-3 transition-colors"
               @blur="bulkSaveField('title', bulkFields.title)"
               @keydown.enter.prevent="$event.target.blur()"
             />
           </div>
           <div>
-            <label class="block text-xs text-gray-500 mb-1">Alt text</label>
+            <label class="block text-xs text-label mb-1">Alt text</label>
             <input
               v-model="bulkFields.alt_text"
               type="text"
               placeholder="Describe the image…"
-              class="w-full text-sm text-gray-900 bg-gray-50 border border-transparent rounded px-2.5 py-1.5 focus:outline-none focus:border-gray-300 focus:bg-white placeholder-gray-300 transition-colors"
+              class="w-full text-sm text-ink bg-surface-sunken border border-transparent rounded px-2.5 py-1.5 focus:outline-none focus:border-line-strong focus:bg-surface placeholder:text-ink-3 transition-colors"
               @blur="bulkSaveField('alt_text', bulkFields.alt_text)"
               @keydown.enter.prevent="$event.target.blur()"
             />
           </div>
           <div>
-            <label class="block text-xs text-gray-500 mb-1">Caption</label>
+            <label class="block text-xs text-label mb-1">Caption</label>
             <textarea
               v-model="bulkFields.caption"
               placeholder="Add a caption…"
               rows="3"
-              class="w-full text-sm text-gray-900 bg-gray-50 border border-transparent rounded px-2.5 py-1.5 focus:outline-none focus:border-gray-300 focus:bg-white placeholder-gray-300 transition-colors resize-none"
+              class="w-full text-sm text-ink bg-surface-sunken border border-transparent rounded px-2.5 py-1.5 focus:outline-none focus:border-line-strong focus:bg-surface placeholder:text-ink-3 transition-colors resize-none"
               @blur="bulkSaveField('caption', bulkFields.caption)"
             />
           </div>
@@ -345,19 +345,19 @@
 
       <!-- Bulk tags -->
       <div class="px-5 py-4">
-        <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Tags</h3>
+        <h3 class="text-xs font-semibold text-label uppercase tracking-wider mb-3">Tags</h3>
         <div class="flex items-center gap-1.5 flex-wrap mb-2">
           <span
             v-for="tag in bulkTags"
             :key="tag.id"
-            class="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-700"
+            class="inline-flex items-center gap-1 rounded-full bg-gray-surface px-2.5 py-0.5 text-xs font-medium text-gray-on-surface"
             :title="tag.count < selectedIds.length ? `On ${tag.count} of ${selectedIds.length} selected` : 'On all selected'"
           >
             {{ tag.name }}
-            <span v-if="tag.count < selectedIds.length" class="text-gray-400">{{ tag.count }}/{{ selectedIds.length }}</span>
+            <span v-if="tag.count < selectedIds.length" class="text-ink-3">{{ tag.count }}/{{ selectedIds.length }}</span>
             <button
               type="button"
-              class="text-gray-400 hover:text-red-500 transition-colors"
+              class="text-ink-3 hover:text-danger transition-colors"
               @click="emit('bulk-detach-tag', tag.id)"
             >
               <svg class="w-3 h-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
@@ -370,7 +370,7 @@
           <div v-if="showTagDropdown" class="fixed inset-0 z-[40]" @click="emit('update:showTagDropdown', false)" />
           <button
             type="button"
-            class="inline-flex items-center gap-1 rounded-full border border-dashed border-gray-300 px-2.5 py-0.5 text-xs font-medium text-gray-500 hover:border-gray-400 hover:text-gray-700 transition-colors"
+            class="inline-flex items-center gap-1 rounded-full border border-dashed border-line px-2.5 py-0.5 text-xs font-medium text-ink-3 hover:border-line-strong hover:text-ink-2 transition-colors"
             @click="emit('open-tag-dropdown')"
           >
             <svg class="w-3 h-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
@@ -380,13 +380,13 @@
           </button>
           <div
             v-if="showTagDropdown"
-            class="absolute left-0 top-7 z-[50] w-48 rounded-lg border border-gray-200 bg-white shadow-lg overflow-hidden"
+            class="absolute left-0 top-7 z-[50] w-48 rounded-lg border border-line bg-surface-raised shadow-lg overflow-hidden"
           >
             <input
               :value="tagSearch"
               type="text"
               placeholder="Search or create…"
-              class="w-full px-3 py-2 text-sm border-b border-gray-100 focus:outline-none"
+              class="w-full px-3 py-2 text-sm bg-surface-raised text-ink border-b border-line placeholder:text-ink-3 focus:outline-none"
               @input="emit('update:tagSearch', $event.target.value)"
             />
             <div class="max-h-40 overflow-y-auto">
@@ -394,16 +394,16 @@
                 v-for="tag in filteredAvailableTags"
                 :key="tag.id"
                 type="button"
-                class="block w-full px-3 py-1.5 text-left text-sm text-gray-700 hover:bg-gray-50"
+                class="block w-full px-3 py-1.5 text-left text-sm text-ink-2 hover:bg-hover"
                 @click="emit('bulk-attach-tag', tag.id)"
               >{{ tag.name }}</button>
               <button
                 v-if="canCreateTag"
                 type="button"
-                class="block w-full px-3 py-1.5 text-left text-sm text-primary-600 font-medium hover:bg-gray-50"
+                class="block w-full px-3 py-1.5 text-left text-sm text-primary font-medium hover:bg-hover"
                 @click="emit('bulk-create-attach-tag', tagSearch)"
               >Create "{{ tagSearch }}"</button>
-              <p v-if="filteredAvailableTags.length === 0 && !canCreateTag" class="px-3 py-2 text-xs text-gray-400">
+              <p v-if="filteredAvailableTags.length === 0 && !canCreateTag" class="px-3 py-2 text-xs text-ink-3">
                 No tags available
               </p>
             </div>
@@ -418,35 +418,35 @@
 
       <!-- Properties -->
       <div class="px-5 py-4">
-        <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Properties</h3>
+        <h3 class="text-xs font-semibold text-label uppercase tracking-wider mb-3">Properties</h3>
         <dl class="space-y-2.5 text-sm">
           <div class="flex justify-between">
-            <dt class="text-gray-500 flex items-center gap-2">
+            <dt class="text-ink-3 flex items-center gap-2">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
               Photos
             </dt>
-            <dd class="text-gray-900 font-medium">{{ photoCount }}</dd>
+            <dd class="text-ink font-medium">{{ photoCount }}</dd>
           </div>
           <div class="flex justify-between">
-            <dt class="text-gray-500 flex items-center gap-2">
+            <dt class="text-ink-3 flex items-center gap-2">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
               </svg>
               Videos
             </dt>
-            <dd class="text-gray-900 font-medium">{{ videoCount }}</dd>
+            <dd class="text-ink font-medium">{{ videoCount }}</dd>
           </div>
         </dl>
       </div>
 
       <!-- Site link -->
       <div class="px-5 py-4">
-        <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Site</h3>
+        <h3 class="text-xs font-semibold text-label uppercase tracking-wider mb-3">Site</h3>
         <a
           href="/"
-          class="flex items-center gap-2 text-sm text-primary-600 hover:text-primary-700 font-medium transition-colors"
+          class="flex items-center gap-2 text-sm text-primary hover:text-primary-hover font-medium transition-colors"
         >
           <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />

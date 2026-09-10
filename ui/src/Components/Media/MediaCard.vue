@@ -1,8 +1,8 @@
 <template>
   <div
     :class="[
-      'group relative bg-gray-100 rounded overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-pointer aspect-square',
-      selected ? 'ring-2 ring-primary-500 ring-offset-1' : '',
+      'group relative bg-media-cell rounded-[var(--media-ring-radius)] overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-pointer aspect-square',
+      selected ? 'ring-[length:var(--media-ring-width)] ring-media-selection' : '',
       isDragging ? 'opacity-50 scale-95' : '',
       file.is_image && !imgBroken && !imgLoaded && !file.blurhash ? 'animate-pulse' : '',
     ]"
@@ -39,21 +39,21 @@
     <!-- Video pill overlay -->
     <div
       v-if="file.is_video"
-      class="absolute top-2 left-2 bg-gray-800/50 backdrop-blur-sm text-white px-2.5 py-1 rounded-full text-xs font-semibold shadow-lg border border-white/20 z-10"
+      class="absolute top-2 left-2 bg-black/50 backdrop-blur-sm text-media-overlay-ink px-2.5 py-1 rounded-full text-xs font-semibold shadow-lg border border-media-overlay-ink/20 z-10"
     >
       VIDEO
     </div>
 
     <!-- Broken image fallback -->
-    <div v-else-if="imgBroken" class="absolute inset-0 w-full h-full flex items-center justify-center bg-gray-100">
-      <svg class="h-10 w-10 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <div v-else-if="imgBroken" class="absolute inset-0 w-full h-full flex items-center justify-center bg-media-placeholder">
+      <svg class="h-10 w-10 text-media-placeholder-ink" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
       </svg>
     </div>
 
     <!-- Non-image file icon -->
-    <div v-else-if="!file.is_image" class="absolute inset-0 w-full h-full flex items-center justify-center bg-gray-200">
-      <svg class="h-16 w-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <div v-else-if="!file.is_image" class="absolute inset-0 w-full h-full flex items-center justify-center bg-media-placeholder">
+      <svg class="h-16 w-16 text-media-placeholder-ink" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
       </svg>
     </div>
@@ -65,7 +65,7 @@
     <button
       v-if="!hideFavorite"
       type="button"
-      class="absolute top-2 right-2 p-1 rounded-full transition-all pointer-events-auto z-10 opacity-0 group-hover:opacity-100 text-white"
+      class="absolute top-2 right-2 p-1 rounded-full transition-all pointer-events-auto z-10 opacity-0 group-hover:opacity-100 text-media-overlay-ink"
       :aria-label="file.is_favorite ? 'Remove from favorites' : 'Add to favorites'"
       :aria-pressed="file.is_favorite"
       :title="file.is_favorite ? 'Remove from favorites' : 'Add to favorites'"
@@ -78,10 +78,10 @@
 
     <!-- File info badge (hover) -->
     <div class="absolute bottom-0 left-0 right-0 bg-linear-to-t from-black/60 to-transparent p-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
-      <p class="text-white text-xs font-medium truncate">
+      <p class="text-media-overlay-ink text-xs font-medium truncate">
         {{ file.original_filename }}
       </p>
-      <p class="text-white/80 text-xs">
+      <p class="text-media-overlay-ink/80 text-xs">
         {{ formatBytes(file.file_size) }}
         <span v-if="file.width && file.height"> &bull; {{ file.width }}&times;{{ file.height }}</span>
       </p>
@@ -96,7 +96,7 @@
         v-for="n in 5"
         :key="n"
         class="w-3 h-3 drop-shadow"
-        :class="n <= file.rating ? 'text-amber-400' : 'text-white/30'"
+        :class="n <= file.rating ? 'text-media-star' : 'text-media-star-empty'"
         fill="currentColor"
         viewBox="0 0 24 24"
       >
@@ -107,7 +107,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { decode } from 'blurhash'
 import { useFavorites } from '../../Composables/useFavorites'
 
@@ -163,20 +163,88 @@ const formatBytes = (bytes, decimals = 2) => {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i]
 }
 
+let dragPreviewEl = null
+
+const removeDragPreview = () => {
+  if (dragPreviewEl) {
+    dragPreviewEl.remove()
+    dragPreviewEl = null
+  }
+}
+
+// The ghost lives on document.body, so a card that unmounts mid-drag (a filter
+// change, a page turn) would otherwise leave it there for good.
+onBeforeUnmount(removeDragPreview)
+
+// The drag ghost is built with inline styles because setDragImage snapshots a
+// detached element — a CSS class on it would still resolve, but the values have
+// to be literals in the cssText either way, so read them off the token layer
+// rather than hardcoding a light-theme colour.
+const token = (name) =>
+  getComputedStyle(document.documentElement).getPropertyValue(name).trim()
+
+const buildDragPreview = (count) => {
+  const size = 72
+  // Same condition the template renders the <img> under: a video with no
+  // generated thumbnail, or an image that already failed to load, has to fall
+  // through to the placeholder colour rather than to a URL that never resolves.
+  const thumbUrl = imgBroken.value
+    ? null
+    : (props.file.thumbnail_url || (props.file.is_image ? props.file.url : null))
+
+  const wrapper = document.createElement('div')
+  wrapper.style.cssText = `position:fixed;top:-1000px;left:-1000px;width:${size}px;height:${size}px;` +
+    'border-radius:6px;overflow:visible;'
+
+  const thumb = document.createElement('div')
+  thumb.style.cssText = `width:${size}px;height:${size}px;border-radius:6px;overflow:hidden;` +
+    'box-shadow:0 2px 8px rgba(0,0,0,0.35);'
+  if (thumbUrl) {
+    // Quoted and escaped: uploaded filenames routinely contain spaces and
+    // parentheses, which an unquoted url() token cannot carry.
+    thumb.style.backgroundImage = `url("${thumbUrl.replace(/["\\]/g, '\\$&')}")`
+    thumb.style.backgroundSize = 'cover'
+    thumb.style.backgroundPosition = 'center'
+  } else {
+    thumb.style.backgroundColor = token('--color-media-placeholder')
+  }
+  wrapper.appendChild(thumb)
+
+  const badge = document.createElement('div')
+  badge.textContent = String(count)
+  badge.style.cssText = 'position:absolute;bottom:-6px;right:-6px;min-width:22px;height:22px;' +
+    `padding:0 6px;border-radius:9999px;background:${token('--primary-fill')};` +
+    `color:${token('--primary-on-fill')};` +
+    'font-family:sans-serif;font-size:12px;font-weight:600;line-height:22px;text-align:center;' +
+    `box-shadow:0 0 0 2px ${token('--surface')};`
+  wrapper.appendChild(badge)
+
+  document.body.appendChild(wrapper)
+  return wrapper
+}
+
 const onDragStart = (event) => {
   isDragging.value = true
+  const count = props.selectedCount || 1
   const data = {
     type: 'media',
     mediaId: props.file.id,
-    selectedCount: props.selectedCount || 1,
+    selectedCount: count,
   }
   event.dataTransfer.setData('application/json', JSON.stringify(data))
   event.dataTransfer.effectAllowed = 'copy'
+
+  if (count > 1) {
+    dragPreviewEl = buildDragPreview(count)
+    event.dataTransfer.setDragImage(dragPreviewEl, 36, 36)
+  }
+
   emit('drag-start', props.file)
 }
 
 const onDragEnd = () => {
   isDragging.value = false
+  removeDragPreview()
   emit('drag-end', props.file)
 }
 </script>

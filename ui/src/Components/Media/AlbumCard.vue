@@ -1,6 +1,6 @@
 <template>
   <button
-    class="group relative aspect-square bg-gray-100 rounded-sm overflow-hidden shadow-sm hover:shadow-md transition-all cursor-pointer text-left w-full"
+    class="group relative aspect-square bg-media-cell rounded-sm overflow-hidden shadow-sm hover:shadow-md transition-all cursor-pointer text-left w-full"
     :class="{ 'opacity-40 scale-95': dragging }"
     :draggable="draggable"
     @click="$emit('click', album)"
@@ -17,9 +17,9 @@
     />
 
     <!-- No cover placeholder -->
-    <div v-else class="w-full h-full flex items-center justify-center bg-gray-200">
+    <div v-else class="w-full h-full flex items-center justify-center bg-media-placeholder">
       <svg
-        class="w-12 h-12 text-gray-400"
+        class="w-12 h-12 text-media-placeholder-ink"
         fill="none" stroke="currentColor" viewBox="0 0 24 24"
       >
         <!-- Set icon (stack of photos) -->
@@ -40,8 +40,8 @@
 
     <!-- Bottom info bar -->
     <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent px-3 py-3">
-      <p class="text-white text-sm font-semibold truncate leading-tight">{{ album.title }}</p>
-      <p class="text-white/70 text-xs mt-0.5">
+      <p class="text-media-overlay-ink text-sm font-semibold truncate leading-tight">{{ album.title }}</p>
+      <p class="text-media-overlay-ink/70 text-xs mt-0.5">
         {{ album.media_count }} {{ album.album_type === 1 ? 'album' : 'photo' }}{{ album.media_count !== 1 ? 's' : '' }}
       </p>
     </div>
@@ -50,7 +50,7 @@
     <div class="absolute top-2 left-2">
       <span
         v-if="album.album_type === 1"
-        class="inline-flex items-center gap-1 px-1.5 py-0.5 bg-black/50 text-white text-xs rounded"
+        class="inline-flex items-center gap-1 px-1.5 py-0.5 bg-black/50 text-media-overlay-ink text-xs rounded"
       >
         <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"

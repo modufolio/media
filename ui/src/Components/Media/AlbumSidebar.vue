@@ -6,8 +6,8 @@
       :class="[
         'w-full flex items-center justify-center rounded-lg px-2 py-2 transition-colors duration-75',
         activeFilter === 'all' && selectedAlbumId === null
-          ? 'bg-gray-100 text-gray-950 dark:bg-white/5 dark:text-white'
-          : 'text-gray-950 hover:bg-gray-50 focus-visible:bg-gray-50 dark:text-gray-300 dark:hover:bg-white/5'
+          ? 'bg-pressed text-ink'
+          : 'text-ink hover:bg-hover focus-visible:bg-hover'
       ]"
       title="Content"
     >
@@ -19,8 +19,8 @@
       :class="[
         'w-full flex items-center justify-center rounded-lg px-2 py-2 transition-colors duration-75',
         activeFilter === 'favorites'
-          ? 'bg-gray-100 text-gray-950 dark:bg-white/5 dark:text-white'
-          : 'text-gray-950 hover:bg-gray-50 focus-visible:bg-gray-50 dark:text-gray-300 dark:hover:bg-white/5'
+          ? 'bg-pressed text-ink'
+          : 'text-ink hover:bg-hover focus-visible:bg-hover'
       ]"
       title="Favorites"
     >
@@ -32,8 +32,8 @@
       :class="[
         'w-full flex items-center justify-center rounded-lg px-2 py-2 transition-colors duration-75',
         activeFilter === 'recent'
-          ? 'bg-gray-100 text-gray-950 dark:bg-white/5 dark:text-white'
-          : 'text-gray-950 hover:bg-gray-50 focus-visible:bg-gray-50 dark:text-gray-300 dark:hover:bg-white/5'
+          ? 'bg-pressed text-ink'
+          : 'text-ink hover:bg-hover focus-visible:bg-hover'
       ]"
       title="Last import"
     >
@@ -45,8 +45,8 @@
       :class="[
         'w-full flex items-center justify-center rounded-lg px-2 py-2 transition-colors duration-75',
         activeFilter === 'rated'
-          ? 'bg-gray-100 text-gray-950 dark:bg-white/5 dark:text-white'
-          : 'text-gray-950 hover:bg-gray-50 focus-visible:bg-gray-50 dark:text-gray-300 dark:hover:bg-white/5'
+          ? 'bg-pressed text-ink'
+          : 'text-ink hover:bg-hover focus-visible:bg-hover'
       ]"
       title="Rated"
     >
@@ -58,8 +58,8 @@
       :class="[
         'w-full flex items-center justify-center rounded-lg px-2 py-2 transition-colors duration-75',
         activeFilter === 'similar'
-          ? 'bg-gray-100 text-gray-950 dark:bg-white/5 dark:text-white'
-          : 'text-gray-950 hover:bg-gray-50 focus-visible:bg-gray-50 dark:text-gray-300 dark:hover:bg-white/5'
+          ? 'bg-pressed text-ink'
+          : 'text-ink hover:bg-hover focus-visible:bg-hover'
       ]"
       title="Similar"
     >
@@ -74,7 +74,7 @@
     <div class="px-3 pb-1">
       <button
         type="button"
-        class="w-full flex items-center justify-between px-3 mb-1 text-xs font-semibold text-gray-950 uppercase tracking-wider dark:text-gray-400 hover:text-gray-700 transition-colors"
+        class="w-full flex items-center justify-between px-3 mb-1 text-xs font-semibold text-label uppercase tracking-wider hover:text-ink transition-colors"
         @click="libraryOpen = !libraryOpen"
       >
         <span>Library</span>
@@ -93,7 +93,7 @@
             <icon name="photo" class="nav-icon w-4 h-4 shrink-0" />
             Content
           </span>
-          <span class="text-xs text-gray-950 shrink-0">{{ totalMediaCount }}</span>
+          <span class="text-xs text-ink-2 shrink-0">{{ totalMediaCount }}</span>
         </button>
 
         <!-- Favorites -->
@@ -105,7 +105,7 @@
             <icon name="heart" class="nav-icon w-4 h-4 shrink-0" />
             Favorites
           </span>
-          <span v-if="favoritesCount > 0" class="text-xs text-gray-950 shrink-0">{{ favoritesCount }}</span>
+          <span v-if="favoritesCount > 0" class="text-xs text-ink-2 shrink-0">{{ favoritesCount }}</span>
         </button>
 
         <!-- Last Import -->
@@ -145,11 +145,11 @@
 
     <!-- ── SMART ALBUMS (code-defined, read-only) ────────────── -->
     <template v-if="smartAlbums.length > 0">
-      <div class="mx-3 my-1 border-t border-gray-950/5 dark:border-white/10" />
+      <div class="mx-3 my-1 border-t border-line" />
       <div class="px-3 pt-1">
         <button
           @click="smartOpen = !smartOpen"
-          class="w-full flex items-center justify-between px-3 mb-1 text-xs font-semibold text-gray-950 uppercase tracking-wider dark:text-gray-400 hover:text-gray-700 transition-colors"
+          class="w-full flex items-center justify-between px-3 mb-1 text-xs font-semibold text-label uppercase tracking-wider hover:text-ink transition-colors"
         >
           <span>Smart albums</span>
           <svg
@@ -167,30 +167,30 @@
             type="button"
             class="w-full flex items-center gap-2 px-3 py-1.5 rounded-md text-sm transition-colors"
             :class="$page.url.startsWith(album.url.replace('/panel', ''))
-              ? 'bg-gray-100 text-gray-900 dark:bg-white/10 dark:text-white'
-              : 'text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-white/5'"
+              ? 'bg-pressed text-ink'
+              : 'text-ink-2 hover:bg-hover'"
             :title="album.description || album.title"
             @click="router.visit(album.url)"
           >
             <!-- Sparkles: the smart-album mark -->
-            <svg class="w-3.5 h-3.5 shrink-0 text-teal-500" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+            <svg class="w-3.5 h-3.5 shrink-0 text-primary" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
               <path d="M10 1l1.7 4.3L16 7l-4.3 1.7L10 13 8.3 8.7 4 7l4.3-1.7L10 1zM4.5 12l.9 2.1 2.1.9-2.1.9-.9 2.1-.9-2.1L1.5 15l2.1-.9.9-2.1zM15.5 12l.9 2.1 2.1.9-2.1.9-.9 2.1-.9-2.1-2.1-.9 2.1-.9.9-2.1z" />
             </svg>
             <span class="truncate flex-1 text-left">{{ album.title }}</span>
-            <span class="text-xs tabular-nums text-gray-400">{{ album.count }}</span>
+            <span class="text-xs tabular-nums text-ink-3">{{ album.count }}</span>
           </button>
         </div>
       </div>
     </template>
 
     <!-- ── COLLECTIONS SECTION ───────────────────────────────── -->
-    <div class="mx-3 my-1 border-t border-gray-950/5 dark:border-white/10" />
+    <div class="mx-3 my-1 border-t border-line" />
     <div class="px-3 pt-1">
 
       <!-- Section header -->
       <button
         @click="collectionsOpen = !collectionsOpen"
-        class="w-full flex items-center justify-between px-3 mb-1 text-xs font-semibold text-gray-950 uppercase tracking-wider dark:text-gray-400 hover:text-gray-700 transition-colors"
+        class="w-full flex items-center justify-between px-3 mb-1 text-xs font-semibold text-label uppercase tracking-wider hover:text-ink transition-colors"
       >
         <span>Collections</span>
         <svg
@@ -204,7 +204,7 @@
       <div v-if="collectionsOpen">
 
         <!-- Empty state -->
-        <p v-if="albumTree.length === 0" class="text-xs text-gray-950 px-2 py-2">
+        <p v-if="albumTree.length === 0" class="text-xs text-ink-3 px-2 py-2">
           No albums yet
         </p>
 
@@ -232,13 +232,13 @@
             <div class="flex items-center gap-0.5 mt-1">
               <button
                 @click.stop="unlistedOpen = !unlistedOpen"
-                class="shrink-0 flex items-center justify-center w-5 h-6 text-gray-950 hover:text-gray-600 rounded"
+                class="shrink-0 flex items-center justify-center w-5 h-6 text-ink hover:text-ink-2 rounded"
               >
                 <svg :class="['w-3 h-3 transition-transform', unlistedOpen ? 'rotate-90' : '']" fill="currentColor" viewBox="0 0 20 20">
                   <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
                 </svg>
               </button>
-              <span class="text-xs text-gray-500 font-medium select-none">Unlisted</span>
+              <span class="text-xs text-ink-3 font-medium select-none">Unlisted</span>
             </div>
             <DraggableAlbumList
               v-if="unlistedOpen"
@@ -262,13 +262,13 @@
             <div class="flex items-center gap-0.5 mt-1">
               <button
                 @click.stop="privateOpen = !privateOpen"
-                class="shrink-0 flex items-center justify-center w-5 h-6 text-gray-950 hover:text-gray-600 rounded"
+                class="shrink-0 flex items-center justify-center w-5 h-6 text-ink hover:text-ink-2 rounded"
               >
                 <svg :class="['w-3 h-3 transition-transform', privateOpen ? 'rotate-90' : '']" fill="currentColor" viewBox="0 0 20 20">
                   <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
                 </svg>
               </button>
-              <span class="text-xs text-gray-500 font-medium select-none">Private</span>
+              <span class="text-xs text-ink-3 font-medium select-none">Private</span>
             </div>
             <DraggableAlbumList
               v-if="privateOpen"
@@ -293,14 +293,14 @@
         <div class="mt-3 space-y-1">
           <button
             @click="$emit('create-album', 0)"
-            class="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-950 hover:bg-gray-50 rounded-lg transition-colors dark:text-white dark:hover:bg-white/5"
+            class="w-full flex items-center gap-2 px-3 py-2 text-sm text-ink hover:bg-hover rounded-lg transition-colors"
           >
             <icon name="plus" class="nav-icon w-4 h-4" />
             New Album
           </button>
           <button
             @click="$emit('create-album', 1)"
-            class="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-950 hover:bg-gray-50 rounded-lg transition-colors dark:text-white dark:hover:bg-white/5"
+            class="w-full flex items-center gap-2 px-3 py-2 text-sm text-ink hover:bg-hover rounded-lg transition-colors"
           >
             <icon name="folder" class="nav-icon w-4 h-4" />
             New Set
@@ -312,12 +312,12 @@
 
     <!-- ── TAGS SECTION ──────────────────────────────────── -->
     <template v-if="libraryTags.length > 0">
-      <div class="mx-3 my-1 border-t border-gray-950/5 dark:border-white/10" />
+      <div class="mx-3 my-1 border-t border-line" />
       <div class="px-3 pt-1 pb-2">
 
         <button
           @click="tagsOpen = !tagsOpen"
-          class="w-full flex items-center justify-between px-3 mb-1 text-xs font-semibold text-gray-950 uppercase tracking-wider dark:text-gray-400 hover:text-gray-700 transition-colors"
+          class="w-full flex items-center justify-between px-3 mb-1 text-xs font-semibold text-label uppercase tracking-wider hover:text-ink transition-colors"
         >
           <span>Tags</span>
           <svg
@@ -336,10 +336,10 @@
             :class="navItem(activeFilter === `tag:${tag.slug ?? tag.id}`)"
           >
             <span class="flex items-center gap-2 truncate">
-              <icon name="tag" class="nav-icon w-3.5 h-3.5 shrink-0 text-gray-950" />
+              <icon name="tag" class="nav-icon w-3.5 h-3.5 shrink-0 text-ink-3" />
               <span class="truncate">{{ tag.name }}</span>
             </span>
-            <span class="text-xs tabular-nums shrink-0 text-gray-950 dark:text-gray-500">
+            <span class="text-xs tabular-nums shrink-0 text-ink-3">
               {{ tag.count }}
             </span>
           </button>
@@ -349,15 +349,15 @@
     </template>
 
     <!-- ── TRASH DROP ZONE ───────────────────────────────────── -->
-    <div class="mx-3 my-1 border-t border-gray-950/5 dark:border-white/10" />
+    <div class="mx-3 my-1 border-t border-line" />
     <div class="px-3 pb-2">
       <div
         data-testid="trash-drop-zone"
         :class="[
           'flex items-center justify-center gap-2 rounded-lg border-2 border-dashed px-3 py-3 transition-colors',
           isTrashDragOver
-            ? 'border-red-400 bg-red-50 text-red-600'
-            : 'border-gray-200 text-gray-950 hover:text-gray-500',
+            ? 'border-danger bg-danger-surface text-danger'
+            : 'border-line text-ink-2 hover:text-ink-3',
         ]"
         @dragover.prevent="onTrashDragOver"
         @dragenter.prevent="onTrashDragEnter"
@@ -430,8 +430,8 @@ const navItem = (isActive, compact = false) => [
   'w-full flex items-center justify-between rounded-lg text-sm font-medium transition-colors duration-75',
   compact ? 'px-3 py-1' : 'px-3 py-2',
   isActive
-    ? 'bg-gray-100 text-gray-950 dark:bg-white/5 dark:text-white'
-    : 'text-gray-950 hover:bg-gray-50 focus-visible:bg-gray-50 dark:text-gray-300 dark:hover:bg-white/5 dark:focus-visible:bg-white/5',
+    ? 'bg-pressed text-ink'
+    : 'text-ink hover:bg-hover focus-visible:bg-hover',
 ]
 
 // ── Albums grouped by visibility ──────────────────────────────────

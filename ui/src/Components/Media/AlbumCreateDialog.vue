@@ -10,8 +10,8 @@
     <form @submit.prevent="handleSubmit" class="space-y-4">
       <!-- Title -->
       <div>
-        <label for="album-title" class="block text-sm font-medium text-gray-700 mb-1">
-          Title <span class="text-red-500">*</span>
+        <label for="album-title" class="block text-sm font-medium text-label mb-1">
+          Title <span class="text-danger">*</span>
         </label>
         <input
           id="album-title"
@@ -27,7 +27,7 @@
 
       <!-- Description -->
       <div>
-        <label for="album-description" class="block text-sm font-medium text-gray-700 mb-1">
+        <label for="album-description" class="block text-sm font-medium text-label mb-1">
           Description
         </label>
         <textarea
@@ -41,7 +41,7 @@
 
       <!-- Parent Set (for nesting) -->
       <div v-if="sets.length > 0 && !isEditing">
-        <label for="album-parent" class="block text-sm font-medium text-gray-700 mb-1">
+        <label for="album-parent" class="block text-sm font-medium text-label mb-1">
           Parent Set
         </label>
         <select
@@ -62,14 +62,14 @@
         <button
           type="button"
           @click="close"
-          class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+          class="px-4 py-2 text-sm font-medium text-ink-2 bg-surface border border-line-strong rounded-lg hover:bg-hover transition-colors"
         >
           Cancel
         </button>
         <button
           @click="handleSubmit"
           :disabled="isSubmitting || !form.title.trim()"
-          class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          class="px-4 py-2 text-sm font-medium text-primary-on-fill bg-primary-fill rounded-lg hover:bg-primary-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {{ isSubmitting ? 'Saving...' : (isEditing ? 'Update' : 'Create') }}
         </button>

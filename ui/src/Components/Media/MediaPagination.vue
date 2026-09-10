@@ -3,7 +3,7 @@
     <button
       type="button"
       :disabled="currentPage <= 1"
-      class="px-2.5 py-1.5 text-sm rounded-md border border-gray-200 text-gray-600 disabled:opacity-40 hover:bg-gray-50 transition-colors"
+      class="px-2.5 py-1.5 text-sm rounded-md border border-line text-ink-2 disabled:opacity-40 hover:bg-hover transition-colors"
       @click="$emit('navigate', currentPage - 1)"
     >←</button>
 
@@ -13,17 +13,17 @@
         type="button"
         class="min-w-8 px-2.5 py-1.5 text-sm rounded-md border transition-colors"
         :class="item.value === currentPage
-          ? 'border-primary-500 bg-primary-50 text-primary-700 font-medium'
-          : 'border-gray-200 text-gray-600 hover:bg-gray-50'"
+          ? 'border-primary bg-primary-surface text-primary-on-surface font-medium'
+          : 'border-line text-ink-2 hover:bg-hover'"
         @click="$emit('navigate', item.value)"
       >{{ item.value }}</button>
-      <span v-else class="px-1 text-gray-400">…</span>
+      <span v-else class="px-1 text-ink-3">…</span>
     </template>
 
     <button
       type="button"
       :disabled="currentPage >= totalPages"
-      class="px-2.5 py-1.5 text-sm rounded-md border border-gray-200 text-gray-600 disabled:opacity-40 hover:bg-gray-50 transition-colors"
+      class="px-2.5 py-1.5 text-sm rounded-md border border-line text-ink-2 disabled:opacity-40 hover:bg-hover transition-colors"
       @click="$emit('navigate', currentPage + 1)"
     >→</button>
   </div>
