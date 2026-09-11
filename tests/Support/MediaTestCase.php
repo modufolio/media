@@ -11,7 +11,8 @@ use Doctrine\ORM\ORMSetup;
 use Doctrine\ORM\Tools\ResolveTargetEntityListener;
 use Doctrine\ORM\Tools\SchemaTool;
 use Modufolio\Media\Contract\UploaderInterface;
-use Modufolio\Media\Database\AlbumTriggers;
+use Modufolio\Media\Database\AlbumTriggerAdapterFactory;
+use Modufolio\Media\Database\Type\BinaryBlobType;
 use Modufolio\Media\Entity\Album;
 use Modufolio\Media\Entity\Media;
 use Modufolio\Media\Model\AlbumModel;
@@ -30,6 +31,8 @@ use Ramsey\Uuid\Doctrine\UuidType;
  */
 abstract class MediaTestCase extends TestCase
 {
+    use DatabaseConnectionTrait;
+
     protected EntityManagerInterface $em;
 
     protected function setUp(): void
@@ -37,16 +40,17 @@ abstract class MediaTestCase extends TestCase
         if (!\Doctrine\DBAL\Types\Type::hasType(UuidType::NAME)) {
             \Doctrine\DBAL\Types\Type::addType(UuidType::NAME, UuidType::class);
         }
+        if (!\Doctrine\DBAL\Types\Type::hasType(BinaryBlobType::NAME)) {
+            \Doctrine\DBAL\Types\Type::addType(BinaryBlobType::NAME, BinaryBlobType::class);
+        }
 
         $config = ORMSetup::createAttributeMetadataConfiguration(
             [dirname(__DIR__, 2) . '/src/Entity', dirname(__DIR__) . '/Fixture'],
             isDevMode: true,
         );
 
-        $connection = DriverManager::getConnection(
-            ['driver' => 'pdo_sqlite', 'memory' => true],
-            $config,
-        );
+        $connection = DriverManager::getConnection(self::connectionParams(), $config);
+        self::resetSchema($connection);
 
         $this->em = new EntityManager($connection, $config);
 
@@ -57,7 +61,8 @@ abstract class MediaTestCase extends TestCase
         $metadata = $this->em->getMetadataFactory()->getAllMetadata();
         (new SchemaTool($this->em))->createSchema($metadata);
 
-        foreach (AlbumTriggers::all() as $sql) {
+        $adapter = AlbumTriggerAdapterFactory::forPlatform($connection->getDatabasePlatform());
+        foreach ($adapter->install() as $sql) {
             $connection->executeStatement($sql);
         }
     }

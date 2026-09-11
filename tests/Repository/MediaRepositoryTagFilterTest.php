@@ -20,7 +20,7 @@ final class MediaRepositoryTagFilterTest extends MediaTestCase
         // The taggables link table is app-side (polymorphic, no FK); the
         // filter reads it with raw SQL, so the test provides the table.
         $this->em->getConnection()->executeStatement(
-            'CREATE TABLE taggables (id INTEGER PRIMARY KEY, tag_id INTEGER, taggable_type TEXT, taggable_id INTEGER)'
+            'CREATE TABLE taggables (id INTEGER PRIMARY KEY, tag_id INTEGER, taggable_type VARCHAR(50), taggable_id INTEGER)'
         );
     }
 
@@ -49,7 +49,7 @@ final class MediaRepositoryTagFilterTest extends MediaTestCase
         $this->em->flush();
 
         $this->em->getConnection()->executeStatement(
-            'INSERT INTO taggables (tag_id, taggable_type, taggable_id) VALUES (?, ?, ?)',
+            'INSERT INTO taggables (id, tag_id, taggable_type, taggable_id) VALUES (1, ?, ?, ?)',
             [$tag->getId(), 'media', $tagged->getId()],
         );
 
@@ -65,7 +65,7 @@ final class MediaRepositoryTagFilterTest extends MediaTestCase
 
         $tagged = $this->makeMedia('by-id.jpg');
         $this->em->getConnection()->executeStatement(
-            'INSERT INTO taggables (tag_id, taggable_type, taggable_id) VALUES (7, ?, ?)',
+            'INSERT INTO taggables (id, tag_id, taggable_type, taggable_id) VALUES (1, 7, ?, ?)',
             ['media', $tagged->getId()],
         );
 

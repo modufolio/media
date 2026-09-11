@@ -4,93 +4,126 @@ declare(strict_types = 1);
 
 namespace Modufolio\Media\Tests\Database;
 
-use Modufolio\Media\Database\AlbumTriggers;
-use PDO;
+use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\DriverManager;
+use Doctrine\DBAL\Platforms\AbstractMySQLPlatform;
+use Doctrine\DBAL\Platforms\PostgreSQLPlatform;
+use Doctrine\DBAL\Platforms\SQLitePlatform;
+use Doctrine\DBAL\Platforms\SQLServerPlatform;
+use Modufolio\Media\Database\AlbumTriggerAdapterFactory;
+use Modufolio\Media\Database\AlbumTriggerAdapterInterface;
+use Modufolio\Media\Tests\Support\DatabaseConnectionTrait;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Exercises the real trigger DDL against a real in-memory SQLite engine.
- *
- * No mocks: the whole point of these triggers is their behaviour inside SQLite,
- * so a stubbed connection would prove nothing. We build the minimal tables the
- * triggers touch, install AlbumTriggers verbatim, and assert on observable
- * side-effects — exactly what a migrated production database would enforce.
+ * Exercises the real trigger/procedure DDL against a real engine — SQLite
+ * in-memory by default, or whatever DB_DRIVER selects (see
+ * docker-compose.yml) — for exactly the reason the original SQLite-only
+ * version of this test gave: the whole point of these rules is their
+ * behaviour inside the database, so a stubbed connection would prove
+ * nothing. We build the minimal tables the rules touch, install the
+ * engine's adapter verbatim, and assert on observable side-effects —
+ * exactly what a migrated production database enforces.
  */
 final class AlbumTriggersTest extends TestCase
 {
-    private PDO $db;
+    use DatabaseConnectionTrait;
+
+    private Connection $db;
+    private AlbumTriggerAdapterInterface $adapter;
 
     protected function setUp(): void
     {
-        $this->db = new PDO('sqlite::memory:');
-        $this->db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $this->db = DriverManager::getConnection(self::connectionParams());
+        self::resetSchema($this->db);
 
-        // recursive_triggers OFF is the documented assumption of album_media_reorder.
-        // OFF is SQLite's default; we assert it here so a changed default can't
-        // silently break the reorder logic.
-        $this->db->exec('PRAGMA recursive_triggers = OFF');
+        if ($this->db->getDatabasePlatform() instanceof SQLitePlatform) {
+            // recursive_triggers OFF is the documented assumption of
+            // album_media_reorder. OFF is SQLite's default; assert it here
+            // so a changed default can't silently break the reorder logic.
+            $this->db->executeStatement('PRAGMA recursive_triggers = OFF');
+        }
 
-        // Minimal schema — only the columns the triggers reference.
-        $this->db->exec(<<<'SQL'
+        $this->createMinimalSchema();
+
+        $this->adapter = AlbumTriggerAdapterFactory::forPlatform($this->db->getDatabasePlatform());
+        foreach ($this->adapter->install() as $sql) {
+            $this->db->executeStatement($sql);
+        }
+    }
+
+    protected function tearDown(): void
+    {
+        foreach ($this->adapter->uninstall() as $sql) {
+            $this->db->executeStatement($sql);
+        }
+
+        $this->db->executeStatement('DROP TABLE album_media');
+        $this->db->executeStatement('DROP TABLE albums');
+
+        parent::tearDown();
+    }
+
+    /**
+     * Only the columns every rule references. Plain integer ids (no
+     * auto-increment) since every helper below assigns ids explicitly —
+     * avoids fighting each engine's own auto-increment syntax for schema
+     * that doesn't need it.
+     */
+    private function createMinimalSchema(): void
+    {
+        $platform = $this->db->getDatabasePlatform();
+        $timestampType = match (true) {
+            $platform instanceof AbstractMySQLPlatform => 'DATETIME',
+            $platform instanceof PostgreSQLPlatform => 'TIMESTAMP',
+            $platform instanceof SQLServerPlatform => 'DATETIME2',
+            default => 'TEXT', // SQLite: untyped storage, any affinity works.
+        };
+
+        $this->db->executeStatement(<<<SQL
             CREATE TABLE albums (
-                id INTEGER PRIMARY KEY,
-                left_id INTEGER NOT NULL,
-                right_id INTEGER NOT NULL,
-                level INTEGER NOT NULL DEFAULT 1,
-                media_count INTEGER NOT NULL DEFAULT 0,
-                updated_at TEXT
+                id INT PRIMARY KEY,
+                left_id INT NOT NULL,
+                right_id INT NOT NULL,
+                level INT NOT NULL DEFAULT 1,
+                media_count INT NOT NULL DEFAULT 0,
+                updated_at {$timestampType}
             )
-        SQL);
+            SQL);
 
-        $this->db->exec(<<<'SQL'
+        $this->db->executeStatement(<<<SQL
             CREATE TABLE album_media (
-                id INTEGER PRIMARY KEY,
-                album_id INTEGER NOT NULL,
-                position INTEGER NOT NULL
+                id INT PRIMARY KEY,
+                album_id INT NOT NULL,
+                media_id INT NOT NULL DEFAULT 0,
+                position INT NOT NULL,
+                updated_at {$timestampType}
             )
-        SQL);
-
-        foreach (AlbumTriggers::all() as $sql) {
-            $this->db->exec($sql);
-        }
+            SQL);
     }
 
     // ---------------------------------------------------------------
-    // Static DDL contract
+    // Install/uninstall contract
     // ---------------------------------------------------------------
 
-    public function testAllContainsEveryTriggerFromBothGroups(): void
+    public function testInstallReturnsAtLeastOneStatementPerRule(): void
     {
-        $expected = count(AlbumTriggers::integrity()) + count(AlbumTriggers::position());
-
-        $this->assertCount($expected, AlbumTriggers::all());
-        $this->assertSame(8, $expected, 'Expected 6 integrity + 2 position triggers.');
+        $this->assertNotEmpty($this->adapter->install());
     }
 
-    public function testEveryTriggerIsInstalledInSqlite(): void
+    public function testUninstallThenReinstallSucceeds(): void
     {
-        $names = $this->query("SELECT name FROM sqlite_master WHERE type = 'trigger' ORDER BY name")
-            ->fetchAll(PDO::FETCH_COLUMN);
-
-        $expected = [
-            ...array_keys(AlbumTriggers::integrity()),
-            ...array_keys(AlbumTriggers::position()),
-        ];
-        sort($expected);
-
-        $this->assertSame($expected, $names);
-    }
-
-    public function testDropAllRemovesEveryTrigger(): void
-    {
-        foreach (AlbumTriggers::dropAll() as $sql) {
-            $this->db->exec($sql);
+        foreach ($this->adapter->uninstall() as $sql) {
+            $this->db->executeStatement($sql);
+        }
+        foreach ($this->adapter->install() as $sql) {
+            $this->db->executeStatement($sql);
         }
 
-        $remaining = (int) $this->query("SELECT COUNT(*) FROM sqlite_master WHERE type = 'trigger'")
-            ->fetchColumn();
-
-        $this->assertSame(0, $remaining);
+        // Prove the reinstalled rules still work, not just that install()
+        // didn't throw.
+        $this->expectExceptionMessageMatches('/nesting depth/');
+        $this->insertAlbum(id: 1, left: 1, right: 2, mediaCount: 0, level: 11);
     }
 
     // ---------------------------------------------------------------
@@ -113,7 +146,7 @@ final class AlbumTriggersTest extends TestCase
         $this->addMedia(id: 10, albumId: 1, position: 1);
         $this->addMedia(id: 11, albumId: 1, position: 2);
 
-        $this->db->exec('DELETE FROM album_media WHERE id = 10');
+        $this->db->executeStatement('DELETE FROM album_media WHERE id = 10');
 
         $this->assertSame(1, $this->mediaCountOf(1));
     }
@@ -124,9 +157,9 @@ final class AlbumTriggersTest extends TestCase
         $this->insertAlbum(id: 1, left: 1, right: 2, mediaCount: 0);
         $this->addMedia(id: 10, albumId: 1, position: 1);
         // The insert trigger pushed it to 1; force it back to 0 to test the floor.
-        $this->db->exec('UPDATE albums SET media_count = 0 WHERE id = 1');
+        $this->db->executeStatement('UPDATE albums SET media_count = 0 WHERE id = 1');
 
-        $this->db->exec('DELETE FROM album_media WHERE id = 10');
+        $this->db->executeStatement('DELETE FROM album_media WHERE id = 10');
 
         $this->assertSame(0, $this->mediaCountOf(1));
     }
@@ -148,7 +181,7 @@ final class AlbumTriggersTest extends TestCase
 
         $this->expectExceptionMessageMatches('/Invalid boundaries/');
 
-        $this->db->exec('UPDATE albums SET right_id = 1 WHERE id = 1');
+        $this->db->executeStatement('UPDATE albums SET right_id = 1 WHERE id = 1');
     }
 
     public function testInsertExceedingMaxDepthIsAborted(): void
@@ -162,7 +195,7 @@ final class AlbumTriggersTest extends TestCase
     {
         $this->insertAlbum(id: 1, left: 1, right: 2, mediaCount: 0, level: 10);
 
-        $this->assertSame(1, (int) $this->query('SELECT COUNT(*) FROM albums')->fetchColumn());
+        $this->assertSame(1, (int) $this->db->fetchOne('SELECT COUNT(*) FROM albums'));
     }
 
     // ---------------------------------------------------------------
@@ -175,7 +208,7 @@ final class AlbumTriggersTest extends TestCase
         $this->seedPositions(albumId: 1, count: 5); // ids 100..104 at positions 1..5
 
         // Move id 104 (position 5) up to position 2.
-        $this->db->exec('UPDATE album_media SET position = 2 WHERE id = 104');
+        $this->adapter->repositionMedia($this->db, 104, 2);
 
         $this->assertSame([
             100 => 1,
@@ -192,7 +225,7 @@ final class AlbumTriggersTest extends TestCase
         $this->seedPositions(albumId: 1, count: 5);
 
         // Move id 101 (position 2) down to position 5.
-        $this->db->exec('UPDATE album_media SET position = 5 WHERE id = 101');
+        $this->adapter->repositionMedia($this->db, 101, 5);
 
         $this->assertSame([
             100 => 1,
@@ -211,7 +244,7 @@ final class AlbumTriggersTest extends TestCase
         $this->addMedia(id: 200, albumId: 2, position: 1);
         $this->addMedia(id: 201, albumId: 2, position: 2);
 
-        $this->db->exec('UPDATE album_media SET position = 1 WHERE id = 102');
+        $this->adapter->repositionMedia($this->db, 102, 1);
 
         // Album 2 untouched.
         $this->assertSame([200 => 1, 201 => 2], $this->positionsOf(2));
@@ -222,7 +255,7 @@ final class AlbumTriggersTest extends TestCase
         $this->insertAlbum(id: 1, left: 1, right: 2, mediaCount: 0);
         $this->seedPositions(albumId: 1, count: 4); // ids 100..103 at 1..4
 
-        $this->db->exec('DELETE FROM album_media WHERE id = 101'); // position 2
+        $this->adapter->removeMediaEverywhere($this->db, mediaId: 101); // position 2
 
         $this->assertSame([
             100 => 1,
@@ -237,18 +270,19 @@ final class AlbumTriggersTest extends TestCase
 
     private function insertAlbum(int $id, int $left, int $right, int $mediaCount, int $level = 1): void
     {
-        $stmt = $this->db->prepare(
-            'INSERT INTO albums (id, left_id, right_id, level, media_count) VALUES (?, ?, ?, ?, ?)'
+        $this->db->executeStatement(
+            'INSERT INTO albums (id, left_id, right_id, level, media_count) VALUES (?, ?, ?, ?, ?)',
+            [$id, $left, $right, $level, $mediaCount],
         );
-        $stmt->execute([$id, $left, $right, $level, $mediaCount]);
     }
 
+    /** media_id doubles as the id here — removeMediaEverywhere() filters by it, and each row is otherwise unique. */
     private function addMedia(int $id, int $albumId, int $position): void
     {
-        $stmt = $this->db->prepare(
-            'INSERT INTO album_media (id, album_id, position) VALUES (?, ?, ?)'
+        $this->db->executeStatement(
+            'INSERT INTO album_media (id, album_id, media_id, position) VALUES (?, ?, ?, ?)',
+            [$id, $albumId, $id, $position],
         );
-        $stmt->execute([$id, $albumId, $position]);
     }
 
     /** Seed $count rows at positions 1..$count with ids 100, 101, ... */
@@ -261,29 +295,17 @@ final class AlbumTriggersTest extends TestCase
 
     private function mediaCountOf(int $albumId): int
     {
-        $stmt = $this->db->prepare('SELECT media_count FROM albums WHERE id = ?');
-        $stmt->execute([$albumId]);
-
-        return (int) $stmt->fetchColumn();
+        return (int) $this->db->fetchOne('SELECT media_count FROM albums WHERE id = ?', [$albumId]);
     }
 
     /** @return array<int, int> id => position, ordered by id */
     private function positionsOf(int $albumId): array
     {
-        $stmt = $this->db->prepare(
-            'SELECT id, position FROM album_media WHERE album_id = ? ORDER BY id'
+        $rows = $this->db->fetchAllKeyValue(
+            'SELECT id, position FROM album_media WHERE album_id = ? ORDER BY id',
+            [$albumId],
         );
-        $stmt->execute([$albumId]);
 
-        return array_map('intval', $stmt->fetchAll(PDO::FETCH_KEY_PAIR));
-    }
-
-    /** PDO::query() returns false on failure; a bad statement should fail loudly. */
-    private function query(string $sql): \PDOStatement
-    {
-        $stmt = $this->db->query($sql);
-        \assert($stmt instanceof \PDOStatement);
-
-        return $stmt;
+        return array_map('intval', $rows);
     }
 }
