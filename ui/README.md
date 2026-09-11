@@ -20,12 +20,15 @@ import { AlbumSidebar, MediaGrid, useFavorites, useFeatured } from '@modufolio/m
 import '@modufolio/media/styles'
 ```
 
-Components are styled with Tailwind utility classes — add the package to your
-Tailwind `content` globs so they are generated:
+Components are styled with Tailwind utility classes — tell Tailwind v4 to
+scan the package so they are generated (auto-detection skips node_modules):
 
-```js
-content: ['./node_modules/@modufolio/media/dist/**/*.js']
+```css
+@source "../node_modules/@modufolio/media/dist";
 ```
+
+On Tailwind v3, the equivalent is a `content` glob:
+`'./node_modules/@modufolio/media/dist/**/*.js'`.
 
 The small `styles` export carries the two scoped-style blocks that are not
 utility classes.
