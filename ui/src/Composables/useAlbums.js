@@ -2,6 +2,7 @@ import { panelUrl } from '@modufolio/panel'
 import { computed } from 'vue'
 import { router, usePage, useHttp } from '@inertiajs/vue3'
 import { useToast } from '@modufolio/panel'
+import { invalidateLibraryCounts } from './useLibraryCounts'
 
 export function useAlbums() {
     const toast = useToast()
@@ -68,7 +69,10 @@ export function useAlbums() {
     const addMediaToAlbum = (albumId, mediaIds, { onSuccess } = {}) => {
         router.post(panelUrl(`/albums/${albumId}/media`), { media_ids: mediaIds }, {
             preserveScroll: true,
-            onSuccess: () => onSuccess?.(),
+            onSuccess: () => {
+                void invalidateLibraryCounts()
+                onSuccess?.()
+            },
             onError: () => toast.error('Failed to add media', 'Error'),
         })
     }
@@ -76,7 +80,10 @@ export function useAlbums() {
     const removeMediaFromAlbum = (albumId, mediaId) => {
         router.delete(panelUrl(`/albums/${albumId}/media/${mediaId}`), {
             preserveScroll: true,
-            onSuccess: () => toast.success('Removed from album', 'Removed'),
+            onSuccess: () => {
+                toast.success('Removed from album', 'Removed')
+                void invalidateLibraryCounts()
+            },
             onError: () => toast.error('Failed to remove media', 'Error'),
         })
     }
@@ -88,6 +95,7 @@ export function useAlbums() {
         void removeMultipleForm.delete(panelUrl(`/api/albums/${albumId}/media`), {
             onSuccess: () => {
                 toast.success(`Removed ${mediaIds.length} item(s) from album`, 'Removed')
+                void invalidateLibraryCounts()
                 onSuccess?.()
             },
             onError: () => toast.error('Failed to remove media', 'Error'),
