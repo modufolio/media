@@ -25,6 +25,7 @@ export { default as VideoPlayer } from './Components/Media/VideoPlayer.vue'
 
 // Non-component helpers shipped beside the components
 export * from './Components/Media/albumDragState'
+export * from './Components/Media/exifUtils'
 export * from './Components/Media/imageUtils'
 
 // Composables
