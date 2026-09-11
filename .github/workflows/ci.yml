@@ -191,3 +191,39 @@ jobs:
 
       - name: Run PHPStan
         run: composer stan
+
+  ui:
+    name: UI (lint, types, tests, build)
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: media/ui
+
+    steps:
+      - name: Checkout media
+        uses: actions/checkout@v6
+        with:
+          path: media
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: media/ui/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Type-check
+        run: npm run type-check
+
+      - name: Test
+        run: npm test
+
+      - name: Build
+        run: npm run build
