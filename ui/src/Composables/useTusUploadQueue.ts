@@ -1,6 +1,6 @@
 import { ref, watch, onScopeDispose } from 'vue'
 import * as tus from 'tus-js-client'
-import { getCsrfToken } from '@modufolio/panel'
+import { getCsrfToken, niceSize } from '@modufolio/panel'
 
 /**
  * Generic, domain-free TUS resumable-upload queue (extraction-ready; future
@@ -331,15 +331,8 @@ export function useTusUploadQueue(options: UseTusUploadQueueOptions) {
     uploads.value = []
   }
 
-  // Format bytes
-  const formatBytes = (bytes: number, decimals = 2) => {
-    if (bytes === 0) return '0 Bytes'
-    const k = 1024
-    const dm = decimals < 0 ? 0 : decimals
-    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB']
-    const i = Math.floor(Math.log(bytes) / Math.log(k))
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i]
-  }
+  /** @deprecated Import {@link niceSize} from @modufolio/panel instead. */
+  const formatBytes = (bytes: number) => niceSize(bytes)
 
   // Get status text
   const getStatusText = (upload: UploadItem) => {

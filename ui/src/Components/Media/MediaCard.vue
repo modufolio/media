@@ -82,7 +82,7 @@
         {{ file.original_filename }}
       </p>
       <p class="text-media-overlay-ink/80 text-xs">
-        {{ formatBytes(file.file_size) }}
+        {{ niceSize(file.file_size) }}
         <span v-if="file.width && file.height"> &bull; {{ file.width }}&times;{{ file.height }}</span>
       </p>
     </div>
@@ -110,6 +110,7 @@
 import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { decode } from 'blurhash'
 import { useFavorites } from '../../Composables/useFavorites'
+import { niceSize } from '@modufolio/panel'
 
 const props = defineProps({
   file: { type: Object, required: true },
@@ -152,15 +153,6 @@ const onDblClick = () => {
 
 const onFavoriteClick = () => {
   toggleFavorite(props.file)
-}
-
-const formatBytes = (bytes, decimals = 2) => {
-  if (bytes === 0) return '0 Bytes'
-  const k = 1024
-  const dm = decimals < 0 ? 0 : decimals
-  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB']
-  const i = Math.floor(Math.log(bytes) / Math.log(k))
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i]
 }
 
 let dragPreviewEl = null

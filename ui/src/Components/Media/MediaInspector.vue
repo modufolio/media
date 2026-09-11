@@ -47,7 +47,7 @@
           </div>
           <div class="flex justify-between">
             <dt class="text-ink-3">File size</dt>
-            <dd class="text-ink font-medium">{{ formatBytes(media.file_size) }}</dd>
+            <dd class="text-ink font-medium">{{ niceSize(media.file_size) }}</dd>
           </div>
           <div class="flex justify-between">
             <dt class="text-ink-3">Type</dt>
@@ -464,7 +464,7 @@
 import { reactive, computed, watch, ref } from 'vue'
 import { router } from '@inertiajs/vue3'
 import { useLocalStorage } from '@vueuse/core'
-import { panelUrl, apiFetch } from '@modufolio/panel'
+import { panelUrl, apiFetch, niceSize, date } from '@modufolio/panel'
 
 const props = defineProps({
   media: { type: Object, default: null },
@@ -632,18 +632,7 @@ const handleViewMedia = () => {
 }
 
 // ── Helpers ──────────────────────────────────────────────────────
-const formatBytes = (bytes, decimals = 2) => {
-  if (!bytes) return '0 Bytes'
-  const k = 1024
-  const sizes = ['Bytes', 'KB', 'MB', 'GB']
-  const i = Math.floor(Math.log(bytes) / Math.log(k))
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(decimals)) + ' ' + sizes[i]
-}
-
-const formatDate = (dateStr) => {
-  if (!dateStr) return '—'
-  return new Date(dateStr).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
-}
+const formatDate = (dateStr) => date(dateStr)?.format('MMM D, YYYY') ?? '—'
 </script>
 
 <style scoped>
