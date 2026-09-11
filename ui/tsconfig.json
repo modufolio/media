@@ -12,7 +12,12 @@
     "strict": true,
     "allowJs": true,
     "types": ["node"],
-    "baseUrl": "."
+    "baseUrl": ".",
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "paths": {
+      "@/*": ["src/*"]
+    }
   },
-  "include": ["src/**/*.ts", "src/**/*.js", "src/**/*.vue"]
+  "include": ["src/**/*.ts", "src/**/*.js", "src/**/*.vue", "tests/**/*.ts"]
 }
