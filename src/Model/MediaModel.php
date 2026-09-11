@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Modufolio\Media\Model;
 
+use Modufolio\Media\Database\AlbumTriggerAdapterFactory;
+use Modufolio\Media\Database\AlbumTriggerAdapterInterface;
 use Modufolio\Media\Entity\Media;
 use Modufolio\Media\Contract\FocusStoreInterface;
 use Modufolio\Media\Contract\MediaJobsInterface;
@@ -29,6 +31,25 @@ class MediaModel
         private readonly StorageInterface $storage,
         private readonly ?FocusStoreInterface $focusStore = null,
     ) {}
+
+    private function adapter(): AlbumTriggerAdapterInterface
+    {
+        return AlbumTriggerAdapterFactory::forPlatform($this->em->getConnection()->getDatabasePlatform());
+    }
+
+    /**
+     * Clears $mediaId from any album's cover_media_id/2/3 it's currently
+     * set as. Album's three cover FKs carry no DB-level ON DELETE — SQL
+     * Server refuses more than one cascading FK from the same table to the
+     * same target — so this is the only thing that clears them.
+     */
+    private function clearCoverReferences(int $mediaId): void
+    {
+        $connection = $this->em->getConnection();
+        foreach (['cover_media_id', 'cover_media_2_id', 'cover_media_3_id'] as $column) {
+            $connection->executeStatement("UPDATE albums SET {$column} = NULL WHERE {$column} = ?", [$mediaId]);
+        }
+    }
 
     // ─── Single-item mutations ────────────────────────────────────
 
@@ -101,6 +122,8 @@ class MediaModel
 
         $this->removeFile($media);
         $this->deleteJob($media);
+        $this->adapter()->removeMediaEverywhere($this->em->getConnection(), $media->getId());
+        $this->clearCoverReferences($media->getId());
         $this->em->remove($media);
         $this->em->flush();
 
@@ -118,11 +141,15 @@ class MediaModel
     {
         $deleted = 0;
         $errors = 0;
+        $adapter = $this->adapter();
+        $connection = $this->em->getConnection();
 
         foreach ($this->mediaRepo->findAll() as $media) {
             if ($this->removeFile($media)) {
                 $errors++;
             }
+            $adapter->removeMediaEverywhere($connection, $media->getId());
+            $this->clearCoverReferences($media->getId());
             $this->em->remove($media);
             $deleted++;
         }
@@ -143,12 +170,16 @@ class MediaModel
     {
         $deleted = 0;
         $errors = 0;
+        $adapter = $this->adapter();
+        $connection = $this->em->getConnection();
 
         foreach ($this->mediaRepo->findByUuids($uuids) as $media) {
             if ($this->removeFile($media)) {
                 $errors++;
             }
             $this->deleteJob($media);
+            $adapter->removeMediaEverywhere($connection, $media->getId());
+            $this->clearCoverReferences($media->getId());
             $this->em->remove($media);
             $deleted++;
         }

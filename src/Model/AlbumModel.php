@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Modufolio\Media\Model;
 
 use Modufolio\Media\Layout\LayoutSettingsFactory;
+use Modufolio\Media\Database\AlbumTriggerAdapterFactory;
+use Modufolio\Media\Database\AlbumTriggerAdapterInterface;
 use Modufolio\Media\Entity\Album;
 use Modufolio\Media\Entity\AlbumMedia;
 use Modufolio\Media\Entity\Media;
@@ -28,6 +30,11 @@ class AlbumModel
         private readonly AlbumMediaRepository $albumMediaRepo,
         private readonly MediaRepository $mediaRepo,
     ) {}
+
+    private function adapter(): AlbumTriggerAdapterInterface
+    {
+        return AlbumTriggerAdapterFactory::forPlatform($this->em->getConnection()->getDatabasePlatform());
+    }
 
     // ─── Album CRUD ───────────────────────────────────────────────
 
@@ -317,10 +324,11 @@ class AlbumModel
     /**
      * Move a single media item to a new position within an album.
      *
-     * Issues a single raw DBAL UPDATE so the album_media_reorder trigger fires
-     * on exactly one row and shifts all siblings atomically. Using Doctrine's
-     * flush() for this would trigger the BEFORE UPDATE handler once per dirty
-     * entity in undefined order, producing incorrect intermediate states.
+     * Delegates to the engine's AlbumTriggerAdapter so exactly one
+     * album_media row changes and siblings shift atomically. Using
+     * Doctrine's flush() for this would trigger the reorder handler once
+     * per dirty entity in undefined order, producing incorrect
+     * intermediate states.
      *
      * @throws \RuntimeException if the album-media entry is not found
      */
@@ -334,17 +342,14 @@ class AlbumModel
         $maxPos = max(0, $album->getMediaCount() - 1);
         $newPosition = max(0, min($newPosition, $maxPos));
 
-        $this->em->getConnection()->executeStatement(
-            "UPDATE album_media SET position = ?, updated_at = datetime('now') WHERE id = ?",
-            [$newPosition, $entry->getId()]
-        );
+        $this->adapter()->repositionMedia($this->em->getConnection(), $entry->getId(), $newPosition);
     }
 
     /**
      * Reorder an album's media to match the given ordered id list.
      *
-     * Places items one at a time with single-row raw UPDATEs so the
-     * album_media_reorder trigger handles sibling shifts (see
+     * Places items one at a time through the adapter's repositionMedia() so
+     * each engine's sibling-shift handling fires per row (see
      * moveMediaPosition()). Placing position 0, 1, 2, … in ascending order
      * is safe: each shift only touches positions >= the one being placed,
      * so already-placed items are never disturbed. Ids not present in the
@@ -357,14 +362,15 @@ class AlbumModel
         $ids = array_values(array_unique(array_map('intval', $mediaIds)));
 
         // Preload every entry in one query, keyed by media id, instead of a
-        // findEntry() lookup per id. The per-row UPDATE stays (the reorder
-        // trigger relies on single-row updates — see moveMediaPosition()).
+        // findEntry() lookup per id. The per-row reposition() call stays
+        // (single-row updates — see moveMediaPosition()).
         $entryByMediaId = [];
         foreach ($this->albumMediaRepo->findEntriesByMediaIds($album->getId(), $ids) as $entry) {
             $entryByMediaId[$entry->getMedia()->getId()] = $entry;
         }
 
         $connection = $this->em->getConnection();
+        $adapter = $this->adapter();
         $position = 0;
 
         foreach ($ids as $mediaId) {
@@ -373,10 +379,7 @@ class AlbumModel
                 continue;
             }
 
-            $connection->executeStatement(
-                "UPDATE album_media SET position = ?, updated_at = datetime('now') WHERE id = ?",
-                [$position, $entry->getId()]
-            );
+            $adapter->repositionMedia($connection, $entry->getId(), $position);
             $position++;
         }
     }

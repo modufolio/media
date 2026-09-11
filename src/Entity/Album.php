@@ -73,16 +73,20 @@ class Album
     #[ORM\Column(name: 'right_id', type: 'integer', nullable: false)]
     private int $rightId;
 
+    // No DB-level onDelete cascade on these three: SQL Server refuses more
+    // than one cascading FK from the same table to the same target
+    // (multiple cascade paths). MediaModel::adapter-independent
+    // clearCoverReferences() clears all three explicitly instead, portably.
     #[ORM\ManyToOne(targetEntity: Media::class)]
-    #[ORM\JoinColumn(name: 'cover_media_id', referencedColumnName: 'id', nullable: true, onDelete: 'SET NULL')]
+    #[ORM\JoinColumn(name: 'cover_media_id', referencedColumnName: 'id', nullable: true)]
     private ?Media $coverMedia = null;
 
     #[ORM\ManyToOne(targetEntity: Media::class)]
-    #[ORM\JoinColumn(name: 'cover_media_2_id', referencedColumnName: 'id', nullable: true, onDelete: 'SET NULL')]
+    #[ORM\JoinColumn(name: 'cover_media_2_id', referencedColumnName: 'id', nullable: true)]
     private ?Media $coverMedia2 = null;
 
     #[ORM\ManyToOne(targetEntity: Media::class)]
-    #[ORM\JoinColumn(name: 'cover_media_3_id', referencedColumnName: 'id', nullable: true, onDelete: 'SET NULL')]
+    #[ORM\JoinColumn(name: 'cover_media_3_id', referencedColumnName: 'id', nullable: true)]
     private ?Media $coverMedia3 = null;
 
     /**
@@ -104,7 +108,10 @@ class Album
      *
      * @var array<string, mixed>
      */
-    #[ORM\Column(name: 'layout_options', type: 'json', nullable: false, options: ['default' => '{}'])]
+    // No DB-level default: MySQL/MariaDB reject a literal DEFAULT on a JSON
+    // column. The entity always sets one (below), so every INSERT already
+    // carries a value.
+    #[ORM\Column(name: 'layout_options', type: 'json', nullable: false)]
     private array $layoutOptions = [];
 
 

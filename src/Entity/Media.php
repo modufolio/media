@@ -5,6 +5,7 @@ declare(strict_types = 1);
 namespace Modufolio\Media\Entity;
 
 use Modufolio\Media\Contract\UploaderInterface;
+use Modufolio\Media\Database\Type\BinaryBlobType;
 use Modufolio\Media\Entity\Traits\Timestampable;
 use Modufolio\Media\Repository\MediaRepository;
 use Doctrine\ORM\Mapping as ORM;
@@ -101,7 +102,7 @@ class Media
     #[ORM\Column(name: 'phash', type: 'string', length: 64, nullable: true)]
     private ?string $phash = null;
 
-    #[ORM\Column(name: 'video_cover', type: 'binary', length: 1048576, nullable: true)]
+    #[ORM\Column(name: 'video_cover', type: BinaryBlobType::NAME, length: 1048576, nullable: true)]
     private ?string $videoCover = null;
 
     #[ORM\Column(name: 'rating', type: 'integer', nullable: true)]
