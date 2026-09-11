@@ -5,9 +5,6 @@ media library, upload processing (slugging, sharding, downscaling, blurhash,
 checksums) and the triggers that guard album integrity — on SQLite, MySQL,
 PostgreSQL and SQL Server.
 
-Extracted from `appkit-portfolio`, which is its first consumer (composer path
-repository, symlinked).
-
 ## What the application provides
 
 The package names no application classes. Four small contracts cover the seams:
@@ -38,7 +35,7 @@ $orm->entities($projectDir . '/src/Entity', $projectDir . '/vendor/modufolio/med
 
 `AlbumTriggerAdapterFactory::forPlatform($connection->getDatabasePlatform())->install()`
 must run against every database the entities live in — apply via a migration
-in the app (and in test bootstraps), exactly as `appkit-portfolio`'s
+in the app (and in test bootstraps), exactly as the consuming app's
 `Version20260829180000` does. `AlbumTriggers::all()` still works as a
 `@deprecated` SQLite-only shortcut for that same migration, kept so it
 doesn't need to change; new code, and any migration targeting a non-SQLite

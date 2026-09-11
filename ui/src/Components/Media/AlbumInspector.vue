@@ -172,7 +172,7 @@
         <div v-else>
           <label class="block text-xs text-label mb-1">Category</label>
 
-          <!-- Picked from the parent set's vocabulary, like Kirby's
+          <!-- Picked from the parent set's vocabulary, similar to
                `options: query / page.parent.categories.split`. -->
           <div v-if="parentCategories.length" class="flex flex-wrap gap-1.5">
             <button
@@ -194,9 +194,8 @@
       </div>
     </div>
 
-    <!-- Layout. Mirrors Kirby's Options tab: pick the layout (its own page
-         template there), then that layout's own options. Sets have no gallery
-         of their own, so they only get the container toggle. -->
+    <!-- Layout. Pick the layout, then that layout's own options. Sets have
+         no gallery of their own, so they only get the container toggle. -->
     <div class="px-5 py-4">
       <button
         type="button"
