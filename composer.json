@@ -1,6 +1,6 @@
 {
     "name": "modufolio/media",
-    "description": "Album and media management for Appkit portfolio sites: nested-set albums, the media library, upload processing and the SQLite integrity triggers.",
+    "description": "Album and media management for Appkit portfolio sites: nested-set albums, the media library, upload processing and the album integrity triggers (SQLite, MySQL, PostgreSQL, SQL Server).",
     "license": "MIT",
     "type": "library",
     "authors": [
@@ -46,6 +46,7 @@
         }
     ],
     "scripts": {
+        "test": "phpunit",
         "stan": "@php -d memory_limit=1G vendor/bin/phpstan analyse --configuration phpstan.php"
     }
 }
