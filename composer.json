@@ -9,11 +9,11 @@
         }
     ],
     "require": {
-        "php": ">=8.2",
+        "php": ">=8.4",
         "claviska/simpleimage": "^4.0",
         "doctrine/orm": "^3.0",
         "kornrunner/blurhash": "^1.2",
-        "modufolio/appkit": "*",
+        "modufolio/appkit": "^0.20",
         "ramsey/uuid": "^4.0",
         "ramsey/uuid-doctrine": "^2.0",
         "symfony/validator": "^7.0"
