@@ -233,7 +233,7 @@
           <input
             v-model.number="options.gap"
             type="range" min="1" max="15" step="1"
-            class="w-full"
+            class="w-full h-2 accent-primary dark:accent-white cursor-pointer"
             @change="save"
           />
           <p class="mt-1 text-xs text-ink-3">{{ options.gap }} px between album covers</p>
@@ -263,7 +263,7 @@
             <input
               v-model.number="options.columns"
               type="range" min="2" max="8" step="1"
-              class="w-full"
+              class="w-full h-2 accent-primary dark:accent-white cursor-pointer"
               @change="save"
             />
             <p class="mt-1 text-xs text-ink-3">{{ options.columns }} columns</p>
@@ -274,7 +274,7 @@
             <input
               v-model.number="options.gap"
               type="range" min="1" max="15" step="1"
-              class="w-full"
+              class="w-full h-2 accent-primary dark:accent-white cursor-pointer"
               @change="save"
             />
             <p class="mt-1 text-xs text-ink-3">{{ options.gap }} px</p>
@@ -322,7 +322,7 @@
           <input
             v-model.number="options.speed"
             type="range" min="500" max="5000" step="100"
-            class="w-full"
+            class="w-full h-2 accent-primary dark:accent-white cursor-pointer"
             @change="save"
           />
         </div>
@@ -353,7 +353,7 @@
             <button
               type="button"
               class="inline-flex items-center gap-1.5 text-sm font-medium transition-colors"
-              :class="fields.visibility === 'public' ? 'text-success hover:text-success-hover' : 'text-ink-3 hover:text-ink-2'"
+              :class="fields.visibility === 'public' ? 'text-success dark:text-ink hover:text-success-hover dark:hover:text-ink-2' : 'text-ink-3 hover:text-ink-2'"
               @click="toggleVisibility"
             >
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -424,7 +424,7 @@
     <div class="px-5 py-4">
       <button
         @click="$emit('delete')"
-        class="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm text-danger border border-danger-surface-strong rounded-lg hover:bg-danger-surface transition-colors"
+        class="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm text-danger dark:text-ink-2 border border-danger-surface-strong dark:border-line-strong rounded-lg hover:bg-danger-surface dark:hover:bg-hover dark:hover:text-ink transition-colors"
       >
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />

@@ -259,7 +259,7 @@
           <a
             :href="media.url"
             target="_blank"
-            class="flex items-center gap-2 text-sm text-primary hover:text-primary-hover font-medium transition-colors"
+            class="flex items-center gap-2 text-sm text-primary dark:text-ink-2 hover:text-primary-hover dark:hover:text-ink font-medium transition-colors"
           >
             <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
@@ -271,7 +271,7 @@
             <button
               type="button"
               class="inline-flex items-center gap-1.5 text-sm font-medium transition-colors"
-              :class="isPublic ? 'text-success hover:text-success-hover' : 'text-ink-3 hover:text-ink-2'"
+              :class="isPublic ? 'text-success dark:text-ink hover:text-success-hover dark:hover:text-ink-2' : 'text-ink-3 hover:text-ink-2'"
               @click="togglePublic"
             >
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -446,7 +446,7 @@
         <h3 class="text-xs font-semibold text-label uppercase tracking-wider mb-3">Site</h3>
         <a
           href="/"
-          class="flex items-center gap-2 text-sm text-primary hover:text-primary-hover font-medium transition-colors"
+          class="flex items-center gap-2 text-sm text-primary dark:text-ink-2 hover:text-primary-hover dark:hover:text-ink font-medium transition-colors"
         >
           <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />

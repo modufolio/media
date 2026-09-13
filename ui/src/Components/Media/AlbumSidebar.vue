@@ -173,7 +173,7 @@
             @click="router.visit(album.url)"
           >
             <!-- Sparkles: the smart-album mark -->
-            <svg class="w-3.5 h-3.5 shrink-0 text-primary" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+            <svg class="w-3.5 h-3.5 shrink-0 text-ink-3" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
               <path d="M10 1l1.7 4.3L16 7l-4.3 1.7L10 13 8.3 8.7 4 7l4.3-1.7L10 1zM4.5 12l.9 2.1 2.1.9-2.1.9-.9 2.1-.9-2.1L1.5 15l2.1-.9.9-2.1zM15.5 12l.9 2.1 2.1.9-2.1.9-.9 2.1-.9-2.1-2.1-.9 2.1-.9.9-2.1z" />
             </svg>
             <span class="truncate flex-1 text-left">{{ album.title }}</span>
