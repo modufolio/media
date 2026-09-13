@@ -10,10 +10,10 @@
     <!-- Cover image -->
     <img
       v-if="preview"
-      :src="preview.thumbnail_url || preview.url"
+      :src="preview.thumbnail_url || preview.url || undefined"
       :alt="album.title"
       class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-      :style="preview.focus ? { objectPosition: focusToCss(preview.focus) } : {}"
+      :style="preview.focus ? { objectPosition: focusToCss(preview.focus) ?? undefined } : {}"
     />
 
     <!-- No cover placeholder -->
@@ -62,28 +62,38 @@
   </button>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed, ref } from 'vue'
-import { focusToCss } from './imageUtils.js'
+import { focusToCss } from './imageUtils'
+import type { Album, AlbumCover, AlbumDragPayload } from '../../types/media'
 
-const props = defineProps({
-  album: { type: Object, required: true },
-  draggable: { type: Boolean, default: false },
+const props = withDefaults(defineProps<{
+  album: Album
+  draggable?: boolean
+}>(), {
+  draggable: false,
 })
 
-const emit = defineEmits(['click', 'dragstart', 'dragend'])
+const emit = defineEmits<{
+  click: [album: Album]
+  dragstart: [album: Album]
+  dragend: [album: Album]
+}>()
 
 const dragging = ref(false)
 
-const preview = computed(() => props.album.preview ?? props.album.covers?.[0] ?? null)
+const preview = computed<AlbumCover | null>(() => props.album.preview ?? props.album.covers?.[0] ?? null)
 
-const onDragStart = (event) => {
+const onDragStart = (event: DragEvent) => {
   dragging.value = true
-  event.dataTransfer.effectAllowed = 'move'
-  event.dataTransfer.setData('application/json', JSON.stringify({
-    type: 'album',
-    albumId: props.album.id,
-  }))
+  if (event.dataTransfer) {
+    event.dataTransfer.effectAllowed = 'move'
+    const payload: AlbumDragPayload = {
+      type: 'album',
+      albumId: props.album.id,
+    }
+    event.dataTransfer.setData('application/json', JSON.stringify(payload))
+  }
   emit('dragstart', props.album)
 }
 

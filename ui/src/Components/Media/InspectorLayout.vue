@@ -22,21 +22,21 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed } from 'vue'
 
-const props = defineProps({
-  inspectorOpen: Boolean,
-  title: String
-})
+const props = defineProps<{
+  inspectorOpen?: boolean
+  title?: string
+}>()
 
-const emit = defineEmits(['update:inspectorOpen'])
+const emit = defineEmits<{ 'update:inspectorOpen': [value: boolean] }>()
 
 const inspectorOpen = computed({
   get() {
     return props.inspectorOpen
   },
-  set(value) {
+  set(value: boolean) {
     emit('update:inspectorOpen', value)
   }
 })

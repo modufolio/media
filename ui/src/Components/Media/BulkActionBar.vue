@@ -13,7 +13,7 @@
     >
       <span class="text-sm font-medium text-ink-2">{{ count }} selected</span>
 
-      <div class="h-4 w-px bg-line" />
+      <div class="h-4 w-px bg-line-strong" />
 
       <!-- Star ratings 1–5 -->
       <div class="flex items-center gap-0.5" title="Rate selected (or press 1–5)">
@@ -33,7 +33,7 @@
 
       <!-- Clear rating -->
       <template v-if="showClearRating">
-        <div class="h-4 w-px bg-line" />
+        <div class="h-4 w-px bg-line-strong" />
         <button
           type="button"
           class="flex items-center gap-1 text-sm font-medium text-ink-3 hover:text-ink-2 transition-colors"
@@ -49,7 +49,7 @@
 
       <!-- Favorite / Unfavorite -->
       <template v-if="favoriteLabel">
-        <div class="h-4 w-px bg-line" />
+        <div class="h-4 w-px bg-line-strong" />
         <button
           type="button"
           class="flex items-center gap-1.5 text-sm font-medium text-ink-2 hover:text-warning transition-colors"
@@ -64,7 +64,7 @@
 
       <!-- Remove from Album -->
       <template v-if="showRemoveFromAlbum">
-        <div class="h-4 w-px bg-line" />
+        <div class="h-4 w-px bg-line-strong" />
         <button
           type="button"
           class="text-sm font-medium text-ink-2 hover:text-ink transition-colors"
@@ -74,7 +74,7 @@
         </button>
       </template>
 
-      <div class="h-4 w-px bg-line" />
+      <div class="h-4 w-px bg-line-strong" />
 
       <button
         type="button"
@@ -94,13 +94,25 @@
   </Transition>
 </template>
 
-<script setup>
-defineProps({
-  count: { type: Number, required: true },
-  showClearRating: { type: Boolean, default: true },
-  favoriteLabel: { type: String, default: null }, // 'Favorite' | 'Unfavorite' | null to hide
-  showRemoveFromAlbum: { type: Boolean, default: false },
+<script setup lang="ts">
+withDefaults(defineProps<{
+  count: number
+  showClearRating?: boolean
+  /** 'Favorite' | 'Unfavorite' | null to hide */
+  favoriteLabel?: string | null
+  showRemoveFromAlbum?: boolean
+}>(), {
+  showClearRating: true,
+  favoriteLabel: null,
+  showRemoveFromAlbum: false,
 })
 
-const emit = defineEmits(['rate', 'clear-rating', 'favorite', 'remove-from-album', 'delete', 'cancel'])
+const emit = defineEmits<{
+  rate: [rating: number]
+  'clear-rating': []
+  favorite: []
+  'remove-from-album': []
+  delete: []
+  cancel: []
+}>()
 </script>

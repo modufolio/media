@@ -1,7 +1,7 @@
 import { ref } from 'vue'
 import type { Ref, ComputedRef } from 'vue'
 // useAlbums.js is typed through allowJs + its JSDoc annotations.
-import { useAlbums } from './useAlbums.js'
+import { useAlbums } from './useAlbums'
 
 interface Album {
     id: number | string

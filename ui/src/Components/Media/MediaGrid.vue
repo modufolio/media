@@ -133,69 +133,90 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue'
 import MediaCard from './MediaCard.vue'
+import type { MediaFile, MediaId } from '../../types/media'
 
-const props = defineProps({
-  files: { type: Array, default: () => [] },
-  loading: { type: Boolean, default: false },
-  skeletonCount: { type: Number, default: null },
-  emptyMessage: { type: String, default: 'No media found.' },
-  emptySubMessage: { type: String, default: 'Upload files to get started.' },
-  emptySubMessageUpload: { type: String, default: 'Drag and drop files here or click to upload.' },
-  allowUpload: { type: Boolean, default: false },
-  hideFavorite: { type: Boolean, default: false },
-  showRating: { type: Boolean, default: false },
-  reorderable: { type: Boolean, default: false },
+const props = withDefaults(defineProps<{
+  files?: MediaFile[]
+  loading?: boolean
+  skeletonCount?: number | null
+  emptyMessage?: string
+  emptySubMessage?: string
+  emptySubMessageUpload?: string
+  allowUpload?: boolean
+  hideFavorite?: boolean
+  showRating?: boolean
+  reorderable?: boolean
+}>(), {
+  files: () => [],
+  loading: false,
+  skeletonCount: null,
+  emptyMessage: 'No media found.',
+  emptySubMessage: 'Upload files to get started.',
+  emptySubMessageUpload: 'Drag and drop files here or click to upload.',
+  allowUpload: false,
+  hideFavorite: false,
+  showRating: false,
+  reorderable: false,
 })
 
-const emit = defineEmits(['view', 'select', 'selection-change', 'drag-start', 'drag-end', 'files-dropped', 'reorder'])
+const emit = defineEmits<{
+  view: [file: MediaFile]
+  select: [file: MediaFile]
+  'selection-change': [ids: MediaId[]]
+  'drag-start': [file: MediaFile]
+  'drag-end': [file: MediaFile]
+  'files-dropped': [files: File[]]
+  reorder: [payload: { fromIndex: number; toIndex: number }]
+}>()
 
-const selectedIds = ref(new Set())
-const lastSelectedIndex = ref(null)
+const selectedIds = ref<Set<MediaId>>(new Set())
+const lastSelectedIndex = ref<number | null>(null)
 const isFileDragging = ref(false)
-const fileInput = ref(null)
+const fileInput = ref<HTMLInputElement | null>(null)
 
 // Track nested dragenter/dragleave via a counter
 let dragCounter = 0
 
-const hasFiles = (event) => {
-  return event.dataTransfer?.types?.includes('Files')
+const hasFiles = (event: DragEvent): boolean => {
+  return event.dataTransfer?.types?.includes('Files') ?? false
 }
 
-const isMediaDrag = (event) => {
-  return event.dataTransfer?.types?.includes('application/json')
+const isMediaDrag = (event: DragEvent): boolean => {
+  return event.dataTransfer?.types?.includes('application/json') ?? false
 }
 
 // ── Drag-to-reorder state (only active when reorderable = true) ─
-const reorderDragIndex = ref(null)
-const reorderDropIndex = ref(null)
+const reorderDragIndex = ref<number | null>(null)
+const reorderDropIndex = ref<number | null>(null)
 
-const onCardDragStart = (file, index) => {
+const onCardDragStart = (file: MediaFile, index: number) => {
   reorderDragIndex.value = index
   emit('drag-start', file)
 }
 
-const onCardDragEnd = (file) => {
+const onCardDragEnd = (file: MediaFile) => {
   reorderDragIndex.value = null
   reorderDropIndex.value = null
   emit('drag-end', file)
 }
 
-const onReorderDragOver = (event, index) => {
+const onReorderDragOver = (event: DragEvent, index: number) => {
   if (reorderDragIndex.value === null || !isMediaDrag(event)) return
   event.preventDefault()
   reorderDropIndex.value = index
 }
 
-const onReorderDragLeave = (event) => {
-  if (!event.currentTarget?.contains(event.relatedTarget)) {
+const onReorderDragLeave = (event: DragEvent) => {
+  const target = event.currentTarget as HTMLElement | null
+  if (!target?.contains(event.relatedTarget as Node | null)) {
     reorderDropIndex.value = null
   }
 }
 
-const onReorderDrop = (event, index) => {
+const onReorderDrop = (event: DragEvent, index: number) => {
   event.preventDefault()
   const fromIndex = reorderDragIndex.value
   reorderDragIndex.value = null
@@ -204,18 +225,18 @@ const onReorderDrop = (event, index) => {
   emit('reorder', { fromIndex, toIndex: index })
 }
 
-const onDragEnter = (event) => {
+const onDragEnter = (event: DragEvent) => {
   if (!props.allowUpload || !hasFiles(event)) return
   dragCounter++
   isFileDragging.value = true
 }
 
-const onDragOver = (event) => {
+const onDragOver = (event: DragEvent) => {
   if (!props.allowUpload || !hasFiles(event)) return
-  event.dataTransfer.dropEffect = 'copy'
+  if (event.dataTransfer) event.dataTransfer.dropEffect = 'copy'
 }
 
-const onDragLeave = (event) => {
+const onDragLeave = (event: DragEvent) => {
   if (!props.allowUpload || !hasFiles(event)) return
   dragCounter--
   if (dragCounter <= 0) {
@@ -224,7 +245,7 @@ const onDragLeave = (event) => {
   }
 }
 
-const onDrop = (event) => {
+const onDrop = (event: DragEvent) => {
   if (!props.allowUpload || !hasFiles(event)) return
   dragCounter = 0
   isFileDragging.value = false
@@ -239,17 +260,18 @@ const triggerFileInput = () => {
   fileInput.value?.click()
 }
 
-const handleFileSelect = (event) => {
-  const files = Array.from(event.target?.files ?? [])
+const handleFileSelect = (event: Event) => {
+  const target = event.target as HTMLInputElement | null
+  const files = Array.from(target?.files ?? [])
   if (files.length > 0) {
     emit('files-dropped', files)
   }
-  if (event.target) {
-    event.target.value = ''
+  if (target) {
+    target.value = ''
   }
 }
 
-const handleSelect = ({ file, event }) => {
+const handleSelect = ({ file, event }: { file: MediaFile; event: MouseEvent }) => {
   const isMetaOrCtrl = event.metaKey || event.ctrlKey
   const isShift = event.shiftKey
   const clickedIndex = props.files.findIndex(f => f.id === file.id)
@@ -291,7 +313,7 @@ const clearSelection = () => {
   emit('selection-change', [])
 }
 
-const getSelectedIds = () => [...selectedIds.value]
+const getSelectedIds = (): MediaId[] => [...selectedIds.value]
 
 const selectAll = () => {
   selectedIds.value = new Set(props.files.map(f => f.id))

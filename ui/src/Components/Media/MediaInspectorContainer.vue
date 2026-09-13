@@ -24,19 +24,25 @@
   />
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { toRef, ref, watch } from 'vue'
 import MediaInspector from './MediaInspector.vue'
 import { useMediaTags } from '../../Composables/useMediaTags'
 import { panelUrl, useFieldSaver } from '@modufolio/panel'
 import { apiFetch } from '@modufolio/panel'
 import { invalidateQueries } from '@modufolio/panel'
+import type { AlbumId, BulkTag, MediaFile, MediaId, Tag } from '../../types/media'
 
-const props = defineProps({
-  media: { type: Object, default: null },
-  files: { type: Array, default: () => [] },
-  albumId: { type: [String, Number], default: null },
-  selectedIds: { type: Array, default: () => [] },
+const props = withDefaults(defineProps<{
+  media?: MediaFile | null
+  files?: MediaFile[]
+  albumId?: AlbumId | null
+  selectedIds?: MediaId[]
+}>(), {
+  media: null,
+  files: () => [],
+  albumId: null,
+  selectedIds: () => [],
 })
 
 // Fired whenever any tag attach/detach completes (single-media or bulk),
@@ -47,7 +53,9 @@ const props = defineProps({
 // 'detach' of any tag other than its own (e.g. removing an unrelated second
 // tag from an item while viewing it on this page) — reacting to either would
 // kick the user out of whatever they're still editing for no reason.
-const emit = defineEmits(['tags-changed'])
+const emit = defineEmits<{
+  'tags-changed': [payload: { action: 'attach' | 'detach'; tagId?: Tag['id'] }]
+}>()
 
 const {
   mediaTags,
@@ -65,17 +73,17 @@ const {
 // so awaiting them and always emitting after is consistent with that: a
 // failed attach/detach already fails silently from the caller's point of
 // view either way.
-const handleAttachTag = async (tagId) => {
+const handleAttachTag = async (tagId: Tag['id']) => {
   await attachTag(tagId)
   emit('tags-changed', { action: 'attach' })
 }
 
-const handleDetachTag = async (tagId) => {
+const handleDetachTag = async (tagId: Tag['id']) => {
   await detachTag(tagId)
   emit('tags-changed', { action: 'detach', tagId })
 }
 
-const handleCreateAndAttachTag = async (name) => {
+const handleCreateAndAttachTag = async (name: string) => {
   await createAndAttachTag(name)
   emit('tags-changed', { action: 'attach' })
 }
@@ -83,12 +91,17 @@ const handleCreateAndAttachTag = async (name) => {
 // ── Bulk actions (metadata save + tag attach) ─────────────────────
 // One shared status/timer (via useFieldSaver) since all three actions
 // report through the same "Saving…/Saved ✓/Error" indicator in the panel.
-const { saveStatus: bulkSaveStatus, save: runBulkAction } = useFieldSaver(async (action) => {
+type BulkAction =
+  | { type: 'metadata'; fields: Record<string, string | null> }
+  | { type: 'attach-tag'; tagId: Tag['id'] }
+  | { type: 'create-attach-tag'; name: string }
+
+const { saveStatus: bulkSaveStatus, save: runBulkAction } = useFieldSaver<[BulkAction]>(async (action) => {
   if (action.type === 'metadata') {
     if (!props.selectedIds.length) return
 
     // Normalise empty strings to null (matches server behaviour)
-    const normalised = Object.fromEntries(
+    const normalised: Record<string, string | null> = Object.fromEntries(
       Object.entries(action.fields).map(([k, v]) => [k, v || null])
     )
 
@@ -106,9 +119,9 @@ const { saveStatus: bulkSaveStatus, save: runBulkAction } = useFieldSaver(async 
     return
   }
 
-  const tagId = action.type === 'attach-tag'
+  const tagId: Tag['id'] = action.type === 'attach-tag'
     ? action.tagId
-    : (await apiFetch('/panel/api/tags', { method: 'POST', body: { name: action.name } })).id
+    : (await apiFetch<{ id: Tag['id'] }>('/panel/api/tags', { method: 'POST', body: { name: action.name } })).id
 
   await apiFetch('/panel/api/tags/bulk/media', {
     method: 'POST',
@@ -117,16 +130,16 @@ const { saveStatus: bulkSaveStatus, save: runBulkAction } = useFieldSaver(async 
   void invalidateQueries('tags:library')
 })
 
-const bulkSave = (fields) => runBulkAction({ type: 'metadata', fields })
+const bulkSave = (fields: Record<string, string | null>) => runBulkAction({ type: 'metadata', fields })
 
-const bulkAttachTag = async (tagId) => {
+const bulkAttachTag = async (tagId: Tag['id']) => {
   showTagDropdown.value = false
   await runBulkAction({ type: 'attach-tag', tagId })
   void loadBulkTags()
   emit('tags-changed', { action: 'attach' })
 }
 
-const bulkCreateAndAttachTag = async (name) => {
+const bulkCreateAndAttachTag = async (name: string) => {
   showTagDropdown.value = false
   const trimmed = name.trim()
   if (!trimmed) return
@@ -139,8 +152,8 @@ const bulkCreateAndAttachTag = async (name) => {
 // One request for the whole selection via GET /panel/api/tags/bulk/media, rather
 // than fanning out a request per file. Kept as a per-file map so bulk-detach
 // only targets the files that actually have the tag being removed.
-const bulkTags = ref([]) // [{ id, name, count }], count = how many selected files carry it
-let perFileTags = new Map() // mediaId (uuid) -> Tag[]
+const bulkTags = ref<BulkTag[]>([]) // count = how many selected files carry it
+let perFileTags = new Map<MediaId, Tag[]>() // mediaId (uuid) -> Tag[]
 
 const loadBulkTags = async () => {
   const ids = [...props.selectedIds]
@@ -150,13 +163,13 @@ const loadBulkTags = async () => {
     return
   }
 
-  const tagsByMediaId = await apiFetch(`/panel/api/tags/bulk/media?ids=${ids.map(encodeURIComponent).join(',')}`)
+  const tagsByMediaId = await apiFetch<Record<string, Tag[]>>(`/panel/api/tags/bulk/media?ids=${ids.map(encodeURIComponent).join(',')}`)
 
   // Stale response guard: selection may have changed while the request was in flight.
   if (props.selectedIds.length !== ids.length || !ids.every((id) => props.selectedIds.includes(id))) return
 
-  const nextPerFileTags = new Map()
-  const counts = new Map() // tagId -> { tag, count }
+  const nextPerFileTags = new Map<MediaId, Tag[]>()
+  const counts = new Map<Tag['id'], { tag: Tag; count: number }>()
 
   for (const id of ids) {
     const tags = tagsByMediaId[id] ?? []
@@ -176,7 +189,7 @@ const loadBulkTags = async () => {
 
 watch(() => props.selectedIds, () => void loadBulkTags(), { immediate: true })
 
-const bulkDetachTag = async (tagId) => {
+const bulkDetachTag = async (tagId: Tag['id']) => {
   const idsWithTag = [...perFileTags.entries()]
     .filter(([, tags]) => tags.some((tag) => tag.id === tagId))
     .map(([mediaId]) => mediaId)

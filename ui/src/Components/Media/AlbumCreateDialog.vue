@@ -51,7 +51,7 @@
         >
           <option :value="null">None (root level)</option>
           <option v-for="set in sets" :key="set.id" :value="set.id">
-            {{ '  '.repeat(set.level - 1) }}{{ set.title }}
+            {{ '  '.repeat((set.level ?? 1) - 1) }}{{ set.title }}
           </option>
         </select>
       </div>
@@ -78,26 +78,48 @@
   </Dialog>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, watch, computed, nextTick } from 'vue'
 import { Dialog } from '@modufolio/panel'
+import type { Album, AlbumId } from '../../types/media'
 
-const props = defineProps({
-  isOpen: { type: Boolean, required: true },
-  albumType: { type: Number, default: 0 }, // 0 = album, 1 = set
-  editAlbum: { type: Object, default: null }, // if provided, we're editing
-  albums: { type: Array, default: () => [] }, // flat album list for parent selection
-  defaultParentId: { type: [Number, String, null], default: null }, // preselect parent for new albums
+/** What the dialog hands back on submit; `id` is null when creating. */
+export interface AlbumFormPayload {
+  id: AlbumId | null
+  title: string
+  description: string | null
+  album_type: number
+  parent_id: AlbumId | null
+}
+
+const props = withDefaults(defineProps<{
+  isOpen: boolean
+  /** 0 = album, 1 = set */
+  albumType?: number
+  /** if provided, we're editing */
+  editAlbum?: Album | null
+  /** flat album list for parent selection */
+  albums?: Album[]
+  /** preselect parent for new albums */
+  defaultParentId?: AlbumId | null
+}>(), {
+  albumType: 0,
+  editAlbum: null,
+  albums: () => [],
+  defaultParentId: null,
 })
 
-const emit = defineEmits(['close', 'submit'])
+const emit = defineEmits<{
+  close: []
+  submit: [payload: AlbumFormPayload]
+}>()
 
-const titleInput = ref(null)
+const titleInput = ref<HTMLInputElement | null>(null)
 const isSubmitting = ref(false)
 
 const isEditing = computed(() => props.editAlbum !== null)
 
-const form = ref({
+const form = ref<{ title: string; description: string; parent_id: AlbumId | null }>({
   title: '',
   description: '',
   parent_id: null,
@@ -133,7 +155,7 @@ const handleSubmit = async () => {
     id: props.editAlbum?.id || null,
     title: form.value.title.trim(),
     description: form.value.description.trim() || null,
-    album_type: isEditing.value ? props.editAlbum.album_type : props.albumType,
+    album_type: props.editAlbum ? props.editAlbum.album_type : props.albumType,
     parent_id: form.value.parent_id,
   })
 

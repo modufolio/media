@@ -373,16 +373,37 @@
 
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, reactive, watch, inject } from 'vue'
+import type { Ref } from 'vue'
 import { router, usePage } from '@inertiajs/vue3'
 import { useLocalStorage } from '@vueuse/core'
 import { SidebarCollapsedKey } from '@modufolio/panel'
 import { panelUrl, useQuery } from '@modufolio/panel'
 import { apiFetch } from '@modufolio/panel'
 import { Icon } from '@modufolio/panel'
+import type {
+  Album, AlbumId, AlbumNode, AlbumVisibility, DropState, MediaFile, MediaId, Tag,
+} from '../../types/media'
 import DraggableAlbumList from './DraggableAlbumList.vue'
-import { activeDragAlbumId } from './albumDragState.js'
+import { activeDragAlbumId } from './albumDragState'
+import { isDragPayload } from './dragPayload'
+
+/** A code-defined smart album as presented by the library controllers. */
+interface SmartAlbum {
+  slug: string
+  title: string
+  description?: string | null
+  count: number
+  is_smart?: boolean
+  url: string
+}
+
+/** A tag as listed by /api/tags/library: with its slug and media count. */
+interface LibraryTag extends Tag {
+  slug?: string | null
+  count: number
+}
 
 // ── Sidebar collapsed state (provided by AppLayout) ──────────────
 const sidebarCollapsed = inject(SidebarCollapsedKey, ref(false))
@@ -392,14 +413,22 @@ const sidebarCollapsed = inject(SidebarCollapsedKey, ref(false))
 // page prop from the library controllers; absent on pages that don't send it.
 // Optional-chained: outside a mounted Inertia app (component tests) there is
 // no page object to read from.
-const smartAlbums = computed(() => usePage()?.props?.smartAlbums ?? [])
+const smartAlbums = computed<SmartAlbum[]>(
+  () => (usePage()?.props as { smartAlbums?: SmartAlbum[] } | undefined)?.smartAlbums ?? [],
+)
 
-const props = defineProps({
-  albumTree:       { type: Array,          default: () => [] },
-  selectedAlbumId: { type: [String, null], default: null },
-  totalMediaCount: { type: Number,         default: 0 },
-  mediaFiles:      { type: Array,          default: () => [] },
-  activeFilter:    { type: String,         default: null },
+const props = withDefaults(defineProps<{
+  albumTree?: AlbumNode[]
+  selectedAlbumId?: AlbumId | null
+  totalMediaCount?: number
+  mediaFiles?: MediaFile[]
+  activeFilter?: string | null
+}>(), {
+  albumTree:       () => [],
+  selectedAlbumId: null,
+  totalMediaCount: 0,
+  mediaFiles:      () => [],
+  activeFilter:    null,
 })
 
 // ── Section collapse state (persisted to localStorage) ───────────
@@ -413,20 +442,20 @@ const privateOpen       = useLocalStorage('sidebar.privateOpen',     true)
 // ── Library tags (for tag-filter sidebar) ────────────────────────
 // Shared cache entry; tag mutations (useMediaTags, bulk tagging) invalidate
 // 'tags:library', so counts refresh here without any navigation heuristics.
-const libraryTagsQuery = useQuery(
+const libraryTagsQuery = useQuery<LibraryTag[]>(
   'tags:library',
   ({ signal }) => apiFetch('/panel/api/tags/library', { signal }),
 )
-const libraryTags = computed(() => libraryTagsQuery.data.value ?? [])
+const libraryTags = computed<LibraryTag[]>(() => libraryTagsQuery.data.value ?? [])
 
 // ── Safe media files (guard against non-array from deferred data) ─
-const safeMediaFiles = computed(() => Array.isArray(props.mediaFiles) ? props.mediaFiles : [])
+const safeMediaFiles = computed<MediaFile[]>(() => Array.isArray(props.mediaFiles) ? props.mediaFiles : [])
 
 // ── Favorites count ──────────────────────────────────────────────
 const favoritesCount = computed(() => safeMediaFiles.value.filter(f => f.is_favorite).length)
 
 // ── Nav item class helper ─────────────────────────────────────────
-const navItem = (isActive, compact = false) => [
+const navItem = (isActive: boolean, compact = false) => [
   'w-full flex items-center justify-between rounded-lg text-sm font-medium transition-colors duration-75',
   compact ? 'px-3 py-1' : 'px-3 py-2',
   isActive
@@ -435,8 +464,8 @@ const navItem = (isActive, compact = false) => [
 ]
 
 // ── Albums grouped by visibility ──────────────────────────────────
-const albumsByVisibility = computed(() => {
-  const result = { public: [], unlisted: [], private: [] }
+const albumsByVisibility = computed<Record<AlbumVisibility, AlbumNode[]>>(() => {
+  const result: Record<AlbumVisibility, AlbumNode[]> = { public: [], unlisted: [], private: [] }
   for (const node of props.albumTree) {
     const vis = node.visibility ?? 'public'
     if (vis in result) {
@@ -449,9 +478,9 @@ const albumsByVisibility = computed(() => {
 })
 
 // ── Local ordered lists (optimistic reorder UI) ───────────────────
-const localPublic   = ref([])
-const localUnlisted = ref([])
-const localPrivate  = ref([])
+const localPublic   = ref<AlbumNode[]>([])
+const localUnlisted = ref<AlbumNode[]>([])
+const localPrivate  = ref<AlbumNode[]>([])
 
 // Genuine synchronization (not derivable): the local lists are an optimistic
 // reorder buffer, so prop updates must be suppressed while a drag is active.
@@ -463,28 +492,35 @@ watch(albumsByVisibility, (groups) => {
 }, { immediate: true })
 
 // ── Drag-reorder state per visibility group ───────────────────────
-const publicDrop   = reactive({ dropIndex: null })
-const unlistedDrop = reactive({ dropIndex: null })
-const privateDrop  = reactive({ dropIndex: null })
+const publicDrop   = reactive<DropState>({ dropIndex: null })
+const unlistedDrop = reactive<DropState>({ dropIndex: null })
+const privateDrop  = reactive<DropState>({ dropIndex: null })
 
-const emit = defineEmits([
-  'select-album', 'create-album', 'edit-album', 'delete-album',
-  'drop-media', 'filter-change', 'reorder-root', 'reorder-children', 'move-album',
-  'delete-media',
-])
+const emit = defineEmits<{
+  'select-album': [albumId: AlbumId | null]
+  'create-album': [albumType: number]
+  'edit-album': [album: Album]
+  'delete-album': [payload: { id: AlbumId }]
+  'drop-media': [payload: { albumId: AlbumId; mediaId: MediaId }]
+  'filter-change': [filter: string]
+  'reorder-root': [payload: { albumIds: AlbumId[] }]
+  'reorder-children': [payload: { setId: AlbumId; albumIds: AlbumId[] }]
+  'move-album': [payload: { albumId: AlbumId; parentId: AlbumId | null }]
+  'delete-media': [payload: { mediaId: MediaId }]
+}>()
 
 // ── Drag handlers — closures keep ref identity in JS scope ────────
 // (Vue template auto-unwraps refs, so passing localPublic through the
 //  template would give the raw array, not the ref. Closures avoid that.)
 
-const makeGroupHandlers = (localList, dropState) => ({
-  dragOver (index, event) {
-    if (!event.dataTransfer.types.includes('application/x-album-id')) return
-    const rect = event.currentTarget.getBoundingClientRect()
+const makeGroupHandlers = (localList: Ref<AlbumNode[]>, dropState: DropState) => ({
+  dragOver (index: number, event: DragEvent) {
+    if (!event.dataTransfer?.types.includes('application/x-album-id')) return
+    const rect = (event.currentTarget as HTMLElement).getBoundingClientRect()
     dropState.dropIndex = event.clientY < rect.top + rect.height / 2 ? index : index + 1
   },
-  dragLeave (event) {
-    if (!event.currentTarget?.contains(event.relatedTarget)) {
+  dragLeave (event: DragEvent) {
+    if (!(event.currentTarget as HTMLElement | null)?.contains(event.relatedTarget as Node | null)) {
       dropState.dropIndex = null
     }
   },
@@ -518,17 +554,17 @@ const publicHandlers   = makeGroupHandlers(localPublic,   publicDrop)
 const unlistedHandlers = makeGroupHandlers(localUnlisted, unlistedDrop)
 const privateHandlers  = makeGroupHandlers(localPrivate,  privateDrop)
 
-const onPublicDragOver    = (i, e) => publicHandlers.dragOver(i, e)
-const onPublicDragLeave   = (e)    => publicHandlers.dragLeave(e)
-const onPublicDrop        = ()     => publicHandlers.drop()
+const onPublicDragOver    = (i: number, e: DragEvent) => publicHandlers.dragOver(i, e)
+const onPublicDragLeave   = (e: DragEvent)            => publicHandlers.dragLeave(e)
+const onPublicDrop        = ()                        => publicHandlers.drop()
 
-const onUnlistedDragOver  = (i, e) => unlistedHandlers.dragOver(i, e)
-const onUnlistedDragLeave = (e)    => unlistedHandlers.dragLeave(e)
-const onUnlistedDrop      = ()     => unlistedHandlers.drop()
+const onUnlistedDragOver  = (i: number, e: DragEvent) => unlistedHandlers.dragOver(i, e)
+const onUnlistedDragLeave = (e: DragEvent)            => unlistedHandlers.dragLeave(e)
+const onUnlistedDrop      = ()                        => unlistedHandlers.drop()
 
-const onPrivateDragOver   = (i, e) => privateHandlers.dragOver(i, e)
-const onPrivateDragLeave  = (e)    => privateHandlers.dragLeave(e)
-const onPrivateDrop       = ()     => privateHandlers.drop()
+const onPrivateDragOver   = (i: number, e: DragEvent) => privateHandlers.dragOver(i, e)
+const onPrivateDragLeave  = (e: DragEvent)            => privateHandlers.dragLeave(e)
+const onPrivateDrop       = ()                        => privateHandlers.drop()
 
 // ── Trash drop zone ───────────────────────────────────────────
 const isTrashDragOver = ref(false)
@@ -539,8 +575,8 @@ const onTrashDragEnter = () => {
   isTrashDragOver.value = true
 }
 
-const onTrashDragOver = (event) => {
-  event.dataTransfer.dropEffect = 'copy'
+const onTrashDragOver = (event: DragEvent) => {
+  if (event.dataTransfer) event.dataTransfer.dropEffect = 'copy'
 }
 
 const onTrashDragLeave = () => {
@@ -551,7 +587,7 @@ const onTrashDragLeave = () => {
   }
 }
 
-const onTrashDrop = (event) => {
+const onTrashDrop = (event: DragEvent) => {
   trashDragCounter = 0
   isTrashDragOver.value = false
 
@@ -562,9 +598,10 @@ const onTrashDrop = (event) => {
   }
 
   try {
-    const raw = event.dataTransfer.getData('application/json')
+    const raw = event.dataTransfer?.getData('application/json')
     if (!raw) return
-    const data = JSON.parse(raw)
+    const data: unknown = JSON.parse(raw)
+    if (!isDragPayload(data)) return
     if (data.type === 'media' && data.mediaId) {
       emit('delete-media', { mediaId: data.mediaId })
     } else if (data.type === 'album' && data.albumId) {

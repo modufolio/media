@@ -9,17 +9,19 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch } from 'vue'
 import Plyr from 'plyr'
 
-const props = defineProps({
-  src: { type: String, required: true },
-  mimeType: { type: String, default: '' },
+const props = withDefaults(defineProps<{
+  src: string
+  mimeType?: string
+}>(), {
+  mimeType: '',
 })
 
-const videoEl = ref(null)
-let player = null
+const videoEl = ref<HTMLVideoElement | null>(null)
+let player: Plyr | null = null
 
 const togglePlayback = () => {
   if (!player) return

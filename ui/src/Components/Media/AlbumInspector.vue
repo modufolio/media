@@ -32,10 +32,10 @@
             <!-- Filled slot: thumbnail + remove button -->
             <template v-if="slot">
               <img
-                :src="slot.thumbnail_url || slot.url"
+                :src="slot.thumbnail_url || slot.url || undefined"
                 class="w-full h-full object-cover"
                 :alt="`Cover ${index + 1}`"
-                :style="slot.focus ? { objectPosition: focusToCss(slot.focus) } : {}"
+                :style="slot.focus ? { objectPosition: focusToCss(slot.focus) ?? undefined } : {}"
               />
               <button
                 @click.stop="removeCover(index)"
@@ -100,7 +100,7 @@
             placeholder="Album title…"
             class="w-full text-sm text-ink bg-surface-sunken border border-transparent rounded px-2.5 py-1.5 focus:outline-none focus:border-line-strong focus:bg-surface placeholder:text-ink-3 transition-colors"
             @blur="save"
-            @keydown.enter.prevent="$event.target.blur()"
+            @keydown.enter.prevent="($event.target as HTMLInputElement).blur()"
           />
         </div>
 
@@ -123,8 +123,8 @@
               ? 'border-danger focus:border-danger'
               : 'border-transparent focus:border-line-strong'"
             @blur="saveSlug"
-            @keydown.enter.prevent="$event.target.blur()"
-            @input="fields.slug = normalizeSlug($event.target.value); slugError = null; slugStatus = null"
+            @keydown.enter.prevent="($event.target as HTMLInputElement).blur()"
+            @input="fields.slug = normalizeSlug(($event.target as HTMLInputElement).value); slugError = null; slugStatus = null"
           />
           <transition name="fade">
             <p v-if="slugError" class="mt-1 text-xs text-danger">{{ slugError }}</p>
@@ -140,7 +140,7 @@
             placeholder="Shown under the title on cards"
             class="w-full text-sm text-ink bg-surface-sunken border border-transparent rounded px-2.5 py-1.5 focus:outline-none focus:border-line-strong focus:bg-surface placeholder:text-ink-3 transition-colors"
             @blur="save"
-            @keydown.enter.prevent="$event.target.blur()"
+            @keydown.enter.prevent="($event.target as HTMLInputElement).blur()"
           />
         </div>
 
@@ -164,7 +164,7 @@
             placeholder="Travel, Nature, Fashion"
             class="w-full text-sm text-ink bg-surface-sunken border border-transparent rounded px-2.5 py-1.5 focus:outline-none focus:border-line-strong focus:bg-surface placeholder:text-ink-3 transition-colors"
             @blur="save"
-            @keydown.enter.prevent="$event.target.blur()"
+            @keydown.enter.prevent="($event.target as HTMLInputElement).blur()"
           />
           <p class="mt-1 text-xs text-ink-3">Comma-separated. Albums inside this set can be grouped by these.</p>
         </div>
@@ -214,7 +214,7 @@
           <select
             :value="fields.layout"
             class="w-full text-sm text-ink bg-surface-sunken border border-transparent rounded px-2.5 py-1.5 focus:outline-none focus:border-line-strong focus:bg-surface transition-colors"
-            @change="changeLayout($event.target.value)"
+            @change="changeLayout(($event.target as HTMLSelectElement).value as AlbumLayout)"
           >
             <option value="grid">Grid</option>
             <option value="slider">Slider</option>
@@ -317,7 +317,7 @@
         <div v-if="album.album_type !== 1 && (fields.layout !== 'slider' || options.autoplay)">
           <label class="block text-xs text-label mb-1">
             {{ fields.layout === 'slider' ? 'Autoplay interval' : 'Slideshow speed' }}
-            <span class="text-ink-3">({{ (options.speed / 1000).toFixed(1) }}s)</span>
+            <span class="text-ink-3">({{ (Number(options.speed) / 1000).toFixed(1) }}s)</span>
           </label>
           <input
             v-model.number="options.speed"
@@ -436,25 +436,38 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, reactive, computed, watch } from 'vue'
 import { router } from '@inertiajs/vue3'
 import { useLocalStorage } from '@vueuse/core'
-import { focusToCss } from './imageUtils.js'
+import { focusToCss } from './imageUtils'
+import { isDragPayload } from './dragPayload'
 import { useToast } from '@modufolio/panel'
 import { panelUrl, useFieldSaver } from '@modufolio/panel'
 import { apiFetch, ApiError } from '@modufolio/panel'
+import type {
+  Album, AlbumCover, AlbumLayout, AlbumVisibility, MediaFile, MediaId,
+} from '../../types/media'
 
-const props = defineProps({
-  album: { type: Object, required: true },
-  mediaFiles: { type: Array, default: () => [] },
-  portfolioUrl: { type: String, default: null },
-  albumInMenu: { type: Boolean, default: false },
-  childAlbums: { type: [Array, Object], default: () => [] },
-  parentCategories: { type: Array, default: () => [] },
+const props = withDefaults(defineProps<{
+  album: Album
+  mediaFiles?: MediaFile[]
+  portfolioUrl?: string | null
+  albumInMenu?: boolean
+  childAlbums?: Album[] | Record<string, Album>
+  parentCategories?: string[]
+}>(), {
+  mediaFiles: () => [],
+  portfolioUrl: null,
+  albumInMenu: false,
+  childAlbums: () => [],
+  parentCategories: () => [],
 })
 
-const emit = defineEmits(['updated', 'delete'])
+const emit = defineEmits<{
+  updated: [album?: Album]
+  delete: []
+}>()
 
 // ── Add to navigation menu ──────────────────────────────────────
 
@@ -506,12 +519,12 @@ const collapseDetails    = useLocalStorage(COLLAPSE_DETAILS_KEY,    false)
 
 // ── Cover slots ─────────────────────────────────────────────────
 
-const coverSlots = ref([null, null, null])
-const dragOverSlot = ref(null)
+const coverSlots = ref<(AlbumCover | null)[]>([null, null, null])
+const dragOverSlot = ref<number | null>(null)
 
-const mediaMap = computed(() => {
-  const map = {}
-  for (const f of props.mediaFiles) map[f.id] = f
+const mediaMap = computed<Record<string, MediaFile>>(() => {
+  const map: Record<string, MediaFile> = {}
+  for (const f of props.mediaFiles) map[String(f.id)] = f
   return map
 })
 
@@ -526,25 +539,25 @@ watch(() => props.album.id, syncCoversFromAlbum, { immediate: true })
 
 // Display data is derived: prefer the freshest media record for each slot, so
 // thumbnails resolve whenever mediaFiles arrives — no re-sync watch needed.
-const displayCovers = computed(() =>
+const displayCovers = computed<(AlbumCover | null)[]>(() =>
   coverSlots.value.map((slot) => {
     if (!slot) return null
-    const fresh = mediaMap.value[slot.id]
+    const fresh = mediaMap.value[String(slot.id)]
     return fresh
-      ? { id: fresh.id, url: fresh.url, thumbnail_url: fresh.thumbnail_url, focus: fresh.focus ?? null }
+      ? { id: fresh.id, url: fresh.url, thumbnail_url: fresh.thumbnail_url ?? null, focus: fresh.focus ?? null }
       : slot
   }),
 )
 
-const onDrop = async (event, slotIndex) => {
+const onDrop = async (event: DragEvent, slotIndex: number) => {
   dragOverSlot.value = null
-  let mediaId = null
+  let mediaId: MediaId | null = null
 
   try {
-    const raw = event.dataTransfer.getData('application/json')
+    const raw = event.dataTransfer?.getData('application/json')
     if (raw) {
-      const data = JSON.parse(raw)
-      if (data.type === 'media') mediaId = data.mediaId
+      const data: unknown = JSON.parse(raw)
+      if (isDragPayload(data) && data.type === 'media') mediaId = data.mediaId
     }
   } catch { return }
 
@@ -559,16 +572,16 @@ const onDrop = async (event, slotIndex) => {
   await persistCovers()
 }
 
-const removeCover = async (slotIndex) => {
+const removeCover = async (slotIndex: number) => {
   coverSlots.value[slotIndex] = null
   await persistCovers()
 }
 
 const persistCovers = async () => {
-  const coverIds = coverSlots.value.filter(Boolean).map(s => s.id)
+  const coverIds = coverSlots.value.filter((s): s is AlbumCover => s !== null).map(s => s.id)
 
   try {
-    const data = await apiFetch(panelUrl(`/api/albums/${props.album.id}/cover`), {
+    const data = await apiFetch<{ album: Album }>(panelUrl(`/api/albums/${props.album.id}/cover`), {
       method: 'PUT',
       body: { covers: coverIds },
     })
@@ -585,17 +598,33 @@ const persistCovers = async () => {
 
 // Defaults mirror the settings classes in src/Album/Layout — the server clamps
 // and validates, so these only need to be sane starting points for the controls.
-const LAYOUT_DEFAULTS = {
+const LAYOUT_DEFAULTS: Record<AlbumLayout, Record<string, unknown>> = {
   grid:   { mode: 'original', columns: 3, gap: 5, speed: 3000 },
   slider: { autoplay: false, speed: 3000, pagedots: false },
   list:   { speed: 3000, caption_align: 'center' },
 }
 
-const optionsFor = (layout, stored) => ({ ...LAYOUT_DEFAULTS[layout] ?? {}, ...(stored ?? {}) })
+const optionsFor = (layout: AlbumLayout, stored?: Record<string, unknown> | null): Record<string, unknown> =>
+  ({ ...LAYOUT_DEFAULTS[layout] ?? {}, ...(stored ?? {}) })
 
-const albumLayout = () => props.album.layout ?? 'grid'
+const albumLayout = (): AlbumLayout => props.album.layout ?? 'grid'
 
-const fields = reactive({
+/** What a layout control can hold; the server validates the exact keys. */
+type LayoutOptionValue = string | number | boolean | null
+
+interface AlbumFields {
+  title: string
+  slug: string
+  description: string
+  subtitle: string
+  category: string
+  categories: string
+  visibility: AlbumVisibility
+  fullwidth: boolean
+  layout: AlbumLayout
+}
+
+const fields = reactive<AlbumFields>({
   title: props.album.title ?? '',
   slug: props.album.slug ?? '',
   description: props.album.description ?? '',
@@ -609,9 +638,9 @@ const fields = reactive({
 
 /** Options for the currently selected layout, kept separate so switching
  *  layout swaps the whole option set rather than merging unrelated keys. */
-const options = reactive(optionsFor(albumLayout(), props.album.layout_options))
+const options = reactive<Record<string, unknown>>(optionsFor(albumLayout(), props.album.layout_options))
 
-const resetOptions = (layout, stored = null) => {
+const resetOptions = (layout: AlbumLayout, stored: Record<string, unknown> | null = null) => {
   Object.keys(options).forEach(k => delete options[k])
   Object.assign(options, optionsFor(layout, stored))
 }
@@ -621,17 +650,17 @@ const resetOptions = (layout, stored = null) => {
  * the server stores. This runs synchronously rather than through a watcher, so
  * the save that follows carries the new layout's options and not the old ones.
  */
-const changeLayout = (layout) => {
+const changeLayout = (layout: AlbumLayout) => {
   fields.layout = layout
   resetOptions(layout, layout === albumLayout() ? props.album.layout_options : null)
   save()
 }
 
-const selectedCategories = computed(() =>
+const selectedCategories = computed<string[]>(() =>
   (fields.category ?? '').split(',').map(c => c.trim()).filter(Boolean)
 )
 
-const toggleCategory = (name) => {
+const toggleCategory = (name: string) => {
   const current = selectedCategories.value
   const next = current.includes(name)
     ? current.filter(c => c !== name)
@@ -670,7 +699,7 @@ const { saveStatus, save } = useFieldSaver(async () => {
 
   if (!fields.title.trim()) { fields.title = props.album.title; return }
 
-  await new Promise((resolve, reject) => {
+  await new Promise<void>((resolve, reject) => {
     router.put(panelUrl(`/albums/${props.album.id}`), {
       title: fields.title.trim(),
       description: fields.description || null,
@@ -680,7 +709,7 @@ const { saveStatus, save } = useFieldSaver(async () => {
       visibility: fields.visibility,
       fullwidth: fields.fullwidth,
       layout: fields.layout,
-      layout_options: { ...options },
+      layout_options: { ...options } as Record<string, LayoutOptionValue>,
     }, {
       preserveScroll: true,
       onSuccess: () => {
@@ -710,11 +739,11 @@ const toggleVisibility = () => {
 
 // ── Save slug ────────────────────────────────────────────────────
 
-const slugStatus = ref(null) // null | 'checking' | 'saving' | 'saved' | 'taken' | 'invalid' | 'error'
-const slugError = ref(null)
-let slugTimer = null
+const slugStatus = ref<'checking' | 'saving' | 'saved' | 'taken' | 'invalid' | 'error' | null>(null)
+const slugError = ref<string | null>(null)
+let slugTimer: ReturnType<typeof setTimeout> | null = null
 
-const normalizeSlug = (val) =>
+const normalizeSlug = (val: string) =>
   val.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
 
 const saveSlug = async () => {
@@ -734,7 +763,7 @@ const saveSlug = async () => {
     return
   }
 
-  clearTimeout(slugTimer)
+  if (slugTimer !== null) clearTimeout(slugTimer)
   slugStatus.value = 'checking'
   slugError.value = null
 
@@ -742,7 +771,7 @@ const saveSlug = async () => {
     const checkRes = await fetch(
       panelUrl(`/api/albums/slug/check?slug=${encodeURIComponent(slug)}&exclude_id=${props.album.id}`)
     )
-    const checkData = await checkRes.json()
+    const checkData: { available: boolean } = await checkRes.json()
 
     if (!checkData.available) {
       slugStatus.value = 'taken'
@@ -768,7 +797,7 @@ const saveSlug = async () => {
 
 // ── Helpers ─────────────────────────────────────────────────────
 
-const formatDate = (dateStr) => {
+const formatDate = (dateStr: string | null | undefined) => {
   if (!dateStr) return '—'
   return new Date(dateStr).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
 }

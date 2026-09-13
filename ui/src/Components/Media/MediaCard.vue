@@ -89,14 +89,14 @@
 
     <!-- Star rating overlay (Lightroom-style) -->
     <div
-      v-if="showRating && file.rating > 0"
+      v-if="showRating && (file.rating ?? 0) > 0"
       class="absolute bottom-1.5 left-1.5 flex items-center gap-px pointer-events-none z-20"
     >
       <svg
         v-for="n in 5"
         :key="n"
         class="w-3 h-3 drop-shadow"
-        :class="n <= file.rating ? 'text-media-star' : 'text-media-star-empty'"
+        :class="n <= (file.rating ?? 0) ? 'text-media-star' : 'text-media-star-empty'"
         fill="currentColor"
         viewBox="0 0 24 24"
       >
@@ -106,28 +106,39 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { decode } from 'blurhash'
 import { useFavorites } from '../../Composables/useFavorites'
 import { niceSize } from '@modufolio/panel'
+import type { MediaFile, MediaDragPayload } from '../../types/media'
 
-const props = defineProps({
-  file: { type: Object, required: true },
-  selected: { type: Boolean, default: false },
-  selectedCount: { type: Number, default: 0 },
-  hideFavorite: { type: Boolean, default: false },
-  showRating: { type: Boolean, default: false },
+const props = withDefaults(defineProps<{
+  file: MediaFile
+  selected?: boolean
+  selectedCount?: number
+  hideFavorite?: boolean
+  showRating?: boolean
+}>(), {
+  selected: false,
+  selectedCount: 0,
+  hideFavorite: false,
+  showRating: false,
 })
 
-const emit = defineEmits(['view', 'select', 'drag-start', 'drag-end'])
+const emit = defineEmits<{
+  view: [file: MediaFile]
+  select: [payload: { file: MediaFile; event: MouseEvent }]
+  'drag-start': [file: MediaFile]
+  'drag-end': [file: MediaFile]
+}>()
 
 const { toggleFavorite } = useFavorites()
 
 const imgBroken = ref(false)
 const imgLoaded = ref(false)
 const isDragging = ref(false)
-const blurhashCanvas = ref(null)
+const blurhashCanvas = ref<HTMLCanvasElement | null>(null)
 
 const onImgError = () => {
   imgBroken.value = true
@@ -137,13 +148,15 @@ const onImgError = () => {
 onMounted(() => {
   const canvas = blurhashCanvas.value
   if (props.file.blurhash && canvas) {
-    const pixels = decode(props.file.blurhash, 32, 32)
+    // blurhash types decode() as Uint8ClampedArray<ArrayBufferLike>; it always
+    // allocates a plain ArrayBuffer, which is what ImageData requires.
+    const pixels = decode(props.file.blurhash, 32, 32) as Uint8ClampedArray<ArrayBuffer>
     const ctx = canvas.getContext('2d')
     if (ctx) ctx.putImageData(new ImageData(pixels, 32, 32), 0, 0)
   }
 })
 
-const onClick = (event) => {
+const onClick = (event: MouseEvent) => {
   emit('select', { file: props.file, event })
 }
 
@@ -152,10 +165,12 @@ const onDblClick = () => {
 }
 
 const onFavoriteClick = () => {
-  toggleFavorite(props.file)
+  // useFavorites() requires is_favorite to be present; a listing may omit it,
+  // in which case it toggles from undefined to true exactly as before.
+  toggleFavorite(props.file as Parameters<typeof toggleFavorite>[0])
 }
 
-let dragPreviewEl = null
+let dragPreviewEl: HTMLDivElement | null = null
 
 const removeDragPreview = () => {
   if (dragPreviewEl) {
@@ -172,10 +187,10 @@ onBeforeUnmount(removeDragPreview)
 // detached element — a CSS class on it would still resolve, but the values have
 // to be literals in the cssText either way, so read them off the token layer
 // rather than hardcoding a light-theme colour.
-const token = (name) =>
+const token = (name: string): string =>
   getComputedStyle(document.documentElement).getPropertyValue(name).trim()
 
-const buildDragPreview = (count) => {
+const buildDragPreview = (count: number): HTMLDivElement => {
   const size = 72
   // Same condition the template renders the <img> under: a video with no
   // generated thumbnail, or an image that already failed to load, has to fall
@@ -215,20 +230,23 @@ const buildDragPreview = (count) => {
   return wrapper
 }
 
-const onDragStart = (event) => {
+const onDragStart = (event: DragEvent) => {
   isDragging.value = true
   const count = props.selectedCount || 1
-  const data = {
+  const data: MediaDragPayload = {
     type: 'media',
     mediaId: props.file.id,
     selectedCount: count,
   }
-  event.dataTransfer.setData('application/json', JSON.stringify(data))
-  event.dataTransfer.effectAllowed = 'copy'
+  const dataTransfer = event.dataTransfer
+  if (dataTransfer) {
+    dataTransfer.setData('application/json', JSON.stringify(data))
+    dataTransfer.effectAllowed = 'copy'
 
-  if (count > 1) {
-    dragPreviewEl = buildDragPreview(count)
-    event.dataTransfer.setDragImage(dragPreviewEl, 36, 36)
+    if (count > 1) {
+      dragPreviewEl = buildDragPreview(count)
+      dataTransfer.setDragImage(dragPreviewEl, 36, 36)
+    }
   }
 
   emit('drag-start', props.file)

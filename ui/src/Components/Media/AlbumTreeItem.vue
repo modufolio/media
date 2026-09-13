@@ -102,24 +102,36 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, reactive, watch } from 'vue'
-import { activeDragAlbumId } from './albumDragState.js'
+import type { Album, AlbumId, AlbumNode, DropState, MediaId } from '../../types/media'
+import { activeDragAlbumId } from './albumDragState'
+import { isDragPayload } from './dragPayload'
 import { useLibraryCounts } from '../../Composables/useLibraryCounts'
 import { useAlbumTreeExpansion } from '../../Composables/useAlbumTreeExpansion'
 
-const props = defineProps({
-  album:           { type: Object,          required: true },
-  selectedAlbumId: { type: [String, null],  default: null },
-  depth:           { type: Number,          default: 0 },
+const props = withDefaults(defineProps<{
+  album: AlbumNode
+  selectedAlbumId?: AlbumId | null
+  depth?: number
+}>(), {
+  selectedAlbumId: null,
+  depth:           0,
 })
 
-const emit = defineEmits(['select', 'edit', 'delete', 'drop-media', 'reorder-children', 'move-into-set'])
+const emit = defineEmits<{
+  select: [albumId: AlbumId]
+  edit: [album: Album]
+  delete: [album: Album]
+  'drop-media': [payload: { albumId: AlbumId; mediaId: MediaId }]
+  'reorder-children': [payload: { setId: AlbumId; albumIds: AlbumId[] }]
+  'move-into-set': [payload: { albumId: AlbumId; setId: AlbumId }]
+}>()
 
 const { albumCounts } = useLibraryCounts()
 
 const { isExpanded } = useAlbumTreeExpansion({
-  albumId: props.album.id,
+  albumId: String(props.album.id),
   defaultExpanded: false,
   onError: (error) => console.warn('Album expansion persistence error:', error),
 })
@@ -129,8 +141,9 @@ const isDragOver = ref(false)
 const isSelected = computed(() => props.selectedAlbumId === props.album.id)
 
 // ── Album drag-to-reorder ─────────────────────────────────────────
-const onAlbumDragStart = (event) => {
+const onAlbumDragStart = (event: DragEvent) => {
   activeDragAlbumId.value = props.album.id
+  if (!event.dataTransfer) return
   event.dataTransfer.setData('application/x-album-id', String(props.album.id))
   event.dataTransfer.effectAllowed = 'move'
 }
@@ -140,9 +153,9 @@ const onAlbumDragEnd = () => {
 }
 
 // ── Media drop + album-into-set ───────────────────────────────────
-const isAlbumDrag = (event) => event.dataTransfer.types.includes('application/x-album-id')
+const isAlbumDrag = (event: DragEvent) => event.dataTransfer?.types.includes('application/x-album-id') ?? false
 
-const onDragOver = (event) => {
+const onDragOver = (event: DragEvent) => {
   if (isAlbumDrag(event)) {
     if (props.album.album_type === 1) {
       // Sets accept album drops — highlight and stop bubbling so no insertion
@@ -156,7 +169,7 @@ const onDragOver = (event) => {
   // Media drag: only leaf albums accept media drops
   if (props.album.album_type === 0) {
     isDragOver.value = true
-    event.dataTransfer.dropEffect = 'copy'
+    if (event.dataTransfer) event.dataTransfer.dropEffect = 'copy'
   }
 }
 
@@ -164,7 +177,7 @@ const onDragLeave = () => {
   isDragOver.value = false
 }
 
-const onDrop = (event) => {
+const onDrop = (event: DragEvent) => {
   isDragOver.value = false
   if (isAlbumDrag(event)) {
     if (props.album.album_type === 1) {
@@ -182,8 +195,8 @@ const onDrop = (event) => {
   }
   if (props.album.album_type !== 0) return
   try {
-    const data = JSON.parse(event.dataTransfer.getData('application/json'))
-    if (data.type === 'media') {
+    const data: unknown = JSON.parse(event.dataTransfer?.getData('application/json') ?? '')
+    if (isDragPayload(data) && data.type === 'media') {
       emit('drop-media', { albumId: props.album.id, mediaId: data.mediaId })
     }
   } catch (e) {
@@ -192,7 +205,7 @@ const onDrop = (event) => {
 }
 
 // ── Children drag-reorder (this album is a set) ───────────────────
-const localChildren = ref([...(props.album.children ?? [])])
+const localChildren = ref<AlbumNode[]>([...(props.album.children ?? [])])
 
 watch(
   () => props.album.children,
@@ -204,16 +217,16 @@ watch(
   { deep: false },
 )
 
-const childDrop = reactive({ dropIndex: null })
+const childDrop = reactive<DropState>({ dropIndex: null })
 
-const onChildDragOver = (index, event) => {
+const onChildDragOver = (index: number, event: DragEvent) => {
   if (!isAlbumDrag(event)) return
-  const rect = event.currentTarget.getBoundingClientRect()
+  const rect = (event.currentTarget as HTMLElement).getBoundingClientRect()
   childDrop.dropIndex = event.clientY < rect.top + rect.height / 2 ? index : index + 1
 }
 
-const onChildDragLeave = (event) => {
-  if (!event.currentTarget.contains(event.relatedTarget)) {
+const onChildDragLeave = (event: DragEvent) => {
+  if (!(event.currentTarget as HTMLElement).contains(event.relatedTarget as Node | null)) {
     childDrop.dropIndex = null
   }
 }

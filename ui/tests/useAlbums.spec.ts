@@ -58,9 +58,9 @@ function album(id: number, left: number, right: number, opts: { type?: number; p
   }
 }
 
-type TreeNode = { id: number; children: TreeNode[] }
-const shape = (nodes: Array<{ id: number; children: unknown[] }>): TreeNode[] =>
-  nodes.map((n) => ({ id: n.id, children: shape(n.children as Array<{ id: number; children: unknown[] }>) }))
+type TreeNode = { id: number | string; children: TreeNode[] }
+const shape = (nodes: Array<{ id: number | string; children: unknown[] }>): TreeNode[] =>
+  nodes.map((n) => ({ id: n.id, children: shape(n.children as Array<{ id: number | string; children: unknown[] }>) }))
 
 describe('useAlbums', () => {
   beforeEach(() => {

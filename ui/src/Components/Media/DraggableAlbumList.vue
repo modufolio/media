@@ -37,17 +37,27 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import AlbumTreeItem from './AlbumTreeItem.vue'
+import type { Album, AlbumId, AlbumNode, DropState, MediaId } from '../../types/media'
 
-defineProps({
-  items:           { type: Array,          required: true },
-  dropState:       { type: Object,         required: true },
-  selectedAlbumId: { type: [String, null], default: null },
+withDefaults(defineProps<{
+  items: AlbumNode[]
+  dropState: DropState
+  selectedAlbumId?: AlbumId | null
+}>(), {
+  selectedAlbumId: null,
 })
 
-defineEmits([
-  'dragover-item', 'dragleave', 'drop-item',
-  'select', 'edit', 'delete', 'drop-media', 'reorder-children', 'move-into-set',
-])
+defineEmits<{
+  'dragover-item': [payload: { index: number; event: DragEvent }]
+  dragleave: [event: DragEvent]
+  'drop-item': []
+  select: [albumId: AlbumId]
+  edit: [album: Album]
+  delete: [album: Album]
+  'drop-media': [payload: { albumId: AlbumId; mediaId: MediaId }]
+  'reorder-children': [payload: { setId: AlbumId; albumIds: AlbumId[] }]
+  'move-into-set': [payload: { albumId: AlbumId; setId: AlbumId }]
+}>()
 </script>

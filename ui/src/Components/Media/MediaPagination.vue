@@ -29,14 +29,18 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 // Shared pagination control for the media pages (Content / Tags / Similar).
 // `items` is the windowed page list produced by usePagination().
-defineProps({
-  currentPage: { type: Number, required: true },
-  totalPages: { type: Number, required: true },
-  items: { type: Array, required: true },
-})
+type PaginationItem =
+  | { type: 'page'; key: string; value: number }
+  | { type: 'ellipsis'; key: string }
 
-defineEmits(['navigate'])
+defineProps<{
+  currentPage: number
+  totalPages: number
+  items: PaginationItem[]
+}>()
+
+defineEmits<{ navigate: [page: number] }>()
 </script>

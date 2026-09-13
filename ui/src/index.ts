@@ -4,7 +4,7 @@
  * that drive them. Compiled from source by the consuming app (the same
  * arrangement as @modufolio/panel).
  */
-export const VERSION = '0.1.0'
+export const VERSION = '0.3.0'
 
 // Components
 export { default as AlbumCard } from './Components/Media/AlbumCard.vue'
@@ -25,6 +25,7 @@ export { default as VideoPlayer } from './Components/Media/VideoPlayer.vue'
 
 // Non-component helpers shipped beside the components
 export * from './Components/Media/albumDragState'
+export * from './Components/Media/dragPayload'
 export * from './Components/Media/exifUtils'
 export * from './Components/Media/imageUtils'
 

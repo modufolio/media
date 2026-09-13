@@ -123,7 +123,7 @@
               placeholder="Add a title…"
               class="w-full text-sm text-ink bg-surface-sunken border border-transparent rounded px-2.5 py-1.5 focus:outline-none focus:border-line-strong focus:bg-surface placeholder:text-ink-3 transition-colors"
               @blur="save('title', fields.title)"
-              @keydown.enter.prevent="$event.target.blur()"
+              @keydown.enter.prevent="($event.target as HTMLInputElement).blur()"
             />
           </div>
           <div>
@@ -134,7 +134,7 @@
               placeholder="Describe the image…"
               class="w-full text-sm text-ink bg-surface-sunken border border-transparent rounded px-2.5 py-1.5 focus:outline-none focus:border-line-strong focus:bg-surface placeholder:text-ink-3 transition-colors"
               @blur="save('alt_text', fields.alt_text)"
-              @keydown.enter.prevent="$event.target.blur()"
+              @keydown.enter.prevent="($event.target as HTMLInputElement).blur()"
             />
           </div>
           <div>
@@ -192,7 +192,7 @@
                 type="text"
                 placeholder="Search or create…"
                 class="w-full px-3 py-2 text-sm bg-surface-raised text-ink border-b border-line placeholder:text-ink-3 focus:outline-none"
-                @input="emit('update:tagSearch', $event.target.value)"
+                @input="emit('update:tagSearch', ($event.target as HTMLInputElement).value)"
               />
               <div class="max-h-40 overflow-y-auto">
                 <button
@@ -316,7 +316,7 @@
               placeholder="Add a title…"
               class="w-full text-sm text-ink bg-surface-sunken border border-transparent rounded px-2.5 py-1.5 focus:outline-none focus:border-line-strong focus:bg-surface placeholder:text-ink-3 transition-colors"
               @blur="bulkSaveField('title', bulkFields.title)"
-              @keydown.enter.prevent="$event.target.blur()"
+              @keydown.enter.prevent="($event.target as HTMLInputElement).blur()"
             />
           </div>
           <div>
@@ -327,7 +327,7 @@
               placeholder="Describe the image…"
               class="w-full text-sm text-ink bg-surface-sunken border border-transparent rounded px-2.5 py-1.5 focus:outline-none focus:border-line-strong focus:bg-surface placeholder:text-ink-3 transition-colors"
               @blur="bulkSaveField('alt_text', bulkFields.alt_text)"
-              @keydown.enter.prevent="$event.target.blur()"
+              @keydown.enter.prevent="($event.target as HTMLInputElement).blur()"
             />
           </div>
           <div>
@@ -387,7 +387,7 @@
               type="text"
               placeholder="Search or create…"
               class="w-full px-3 py-2 text-sm bg-surface-raised text-ink border-b border-line placeholder:text-ink-3 focus:outline-none"
-              @input="emit('update:tagSearch', $event.target.value)"
+              @input="emit('update:tagSearch', ($event.target as HTMLInputElement).value)"
             />
             <div class="max-h-40 overflow-y-auto">
               <button
@@ -460,39 +460,59 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { reactive, computed, watch, ref } from 'vue'
 import { router } from '@inertiajs/vue3'
 import { useLocalStorage } from '@vueuse/core'
 import { panelUrl, apiFetch, niceSize, date } from '@modufolio/panel'
+import type { SaveStatus } from '@modufolio/panel'
 import { exifSummary } from './exifUtils'
+import type { AlbumId, BulkTag, MediaFile, MediaId, Tag } from '../../types/media'
 
-const props = defineProps({
-  media: { type: Object, default: null },
-  files: { type: Array, default: () => [] },
-  albumId: { type: [String, Number], default: null },
-  selectedIds: { type: Array, default: () => [] },
-  mediaTags: { type: Array, default: () => [] },
-  filteredAvailableTags: { type: Array, default: () => [] },
-  canCreateTag: { type: Boolean, default: false },
-  showTagDropdown: { type: Boolean, default: false },
-  tagSearch: { type: String, default: '' },
-  bulkSaveStatus: { type: String, default: null },
-  bulkTags: { type: Array, default: () => [] }, // [{ id, name, count }]
+/** The editable text fields of a single media item. */
+type EditableField = 'title' | 'alt_text' | 'caption'
+
+/** Fields PATCHed by save(): text, rating and visibility. */
+type SavableField = EditableField | 'rating' | 'is_public'
+
+const props = withDefaults(defineProps<{
+  media?: MediaFile | null
+  files?: MediaFile[]
+  albumId?: AlbumId | null
+  selectedIds?: MediaId[]
+  mediaTags?: Tag[]
+  filteredAvailableTags?: Tag[]
+  canCreateTag?: boolean
+  showTagDropdown?: boolean
+  tagSearch?: string
+  bulkSaveStatus?: SaveStatus
+  bulkTags?: BulkTag[]
+}>(), {
+  media: null,
+  files: () => [],
+  albumId: null,
+  selectedIds: () => [],
+  mediaTags: () => [],
+  filteredAvailableTags: () => [],
+  canCreateTag: false,
+  showTagDropdown: false,
+  tagSearch: '',
+  bulkSaveStatus: null,
+  bulkTags: () => [],
 })
 
-const emit = defineEmits([
-  'update:showTagDropdown',
-  'update:tagSearch',
-  'open-tag-dropdown',
-  'attach-tag',
-  'detach-tag',
-  'create-tag',
-  'bulk-save',
-  'bulk-attach-tag',
-  'bulk-create-attach-tag',
-  'bulk-detach-tag',
-])
+const emit = defineEmits<{
+  'update:showTagDropdown': [value: boolean]
+  'update:tagSearch': [value: string]
+  'open-tag-dropdown': []
+  'attach-tag': [tagId: Tag['id']]
+  'detach-tag': [tagId: Tag['id']]
+  'create-tag': [name: string]
+  'bulk-save': [fields: Record<string, string | null>]
+  'bulk-attach-tag': [tagId: Tag['id']]
+  'bulk-create-attach-tag': [name: string]
+  'bulk-detach-tag': [tagId: Tag['id']]
+}>()
 
 // ── Library summary counts ────────────────────────────────────────
 const photoCount = computed(() => props.files.filter(f => f.is_image).length)
@@ -503,16 +523,16 @@ const videoCount = computed(() => props.files.filter(f => f.is_video).length)
 // optimistically (the same single-source-of-truth pattern as useFavorites),
 // so grid shortcuts and the inspector can never disagree.
 const localRating = computed(() => props.media?.rating ?? null)
-const hoverRating = ref(null)
+const hoverRating = ref<number | null>(null)
 
-const saveRating = async (value) => {
+const saveRating = async (value: number | null) => {
   if (!props.media) return
   props.media.rating = value
   await save('rating', value)
 }
 
 // ── Single-media editable fields ──────────────────────────────────
-const fields = reactive({
+const fields = reactive<Record<EditableField, string>>({
   title: '',
   alt_text: '',
   caption: '',
@@ -522,9 +542,9 @@ const fields = reactive({
 const isPublic = computed(() => props.media?.is_public !== false)
 
 // ── Bulk edit fields ──────────────────────────────────────────────
-const bulkFields = reactive({ title: '', alt_text: '', caption: '' })
+const bulkFields = reactive<Record<EditableField, string>>({ title: '', alt_text: '', caption: '' })
 
-const bulkSaveField = (field, value) => {
+const bulkSaveField = (field: EditableField, value: string) => {
   emit('bulk-save', { [field]: value || null })
 }
 
@@ -554,12 +574,12 @@ watch(() => props.media, (m) => {
 const exifData = computed(() => exifSummary(props.media?.metadata))
 
 // ── Save ─────────────────────────────────────────────────────────
-const saveStatus = ref(null)
-let saveTimer = null
+const saveStatus = ref<SaveStatus>(null)
+let saveTimer: ReturnType<typeof setTimeout> | null = null
 
-const save = async (field, value) => {
+const save = async (field: SavableField, value: string | number | boolean | null) => {
   if (!props.media) return
-  clearTimeout(saveTimer)
+  if (saveTimer !== null) clearTimeout(saveTimer)
   saveStatus.value = 'saving'
 
   try {
@@ -593,7 +613,7 @@ const handleViewMedia = () => {
 }
 
 // ── Helpers ──────────────────────────────────────────────────────
-const formatDate = (dateStr) => date(dateStr)?.format('MMM D, YYYY') ?? '—'
+const formatDate = (dateStr: string | null | undefined) => date(dateStr)?.format('MMM D, YYYY') ?? '—'
 </script>
 
 <style scoped>

@@ -4,11 +4,9 @@ import { apiFetch } from '@modufolio/panel'
 import { useAsyncData } from '@modufolio/panel'
 import { invalidateQueries } from '@modufolio/panel'
 
-export interface Tag {
-  id: number | string
-  name: string
-  [key: string]: unknown
-}
+import type { Tag } from '../types/media'
+
+export type { Tag }
 
 interface MediaLike {
   id: number | string
