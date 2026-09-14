@@ -1,6 +1,6 @@
 {
   "name": "@modufolio/media",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Media-library UI for Appkit portfolio sites — album sidebar, media grid, inspectors, upload queue, and their composables (Vue 3 + Inertia).",
   "license": "MIT",
   "type": "module",

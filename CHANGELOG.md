@@ -5,6 +5,21 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-09-13
+
+### Changed
+
+- ⚠️ **PHP 8.4 and `modufolio/appkit ^0.20` are required.** The appkit
+  constraint was `*`; it now follows the framework's release line, which
+  raised its own floor to 8.4 in 0.20.0.
+
+### Fixed
+
+- The media and album inspectors and the album sidebar have dark-mode
+  colours: range inputs get a height, accent colour and pointer cursor, and
+  the visibility toggles, delete button and album links use ink tones
+  instead of the light-mode brand colours.
+
 ## [0.2.0] - 2026-09-11
 
 ### Added
