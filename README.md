@@ -1,5 +1,9 @@
 # modufolio/media
 
+[![CI](https://img.shields.io/github/actions/workflow/status/modufolio/media/ci.yml?branch=main&style=flat-square&label=CI)](https://github.com/modufolio/media/actions/workflows/ci.yml)
+[![PHPStan](https://img.shields.io/badge/PHPStan-level%208-brightgreen.svg?style=flat-square)](https://phpstan.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-brightgreen.svg?style=flat-square)](https://opensource.org/licenses/MIT)
+
 Album and media management for Appkit portfolio sites: nested-set albums, the
 media library, upload processing (slugging, sharding, downscaling, blurhash,
 checksums) and the triggers that guard album integrity — on SQLite, MySQL,
@@ -23,8 +27,7 @@ tags are polymorphic app-level data this package cannot name.
 ## Wiring
 
 ```php
-// composer.json (app):  "repositories": [{"type": "path", "url": "../media"}]
-// composer require modufolio/media:@dev
+// composer require modufolio/media
 
 // config/doctrine.php
 $orm->entities($projectDir . '/src/Entity', $projectDir . '/vendor/modufolio/media/src/Entity')
@@ -35,11 +38,7 @@ $orm->entities($projectDir . '/src/Entity', $projectDir . '/vendor/modufolio/med
 
 `AlbumTriggerAdapterFactory::forPlatform($connection->getDatabasePlatform())->install()`
 must run against every database the entities live in — apply via a migration
-in the app (and in test bootstraps), exactly as the consuming app's
-`Version20260829180000` does. `AlbumTriggers::all()` still works as a
-`@deprecated` SQLite-only shortcut for that same migration, kept so it
-doesn't need to change; new code, and any migration targeting a non-SQLite
-database, should call the factory directly.
+in the app (and in test bootstraps).
 
 Each engine's rules live in their own `AlbumTriggerAdapterInterface`
 implementation (`src/Database/Trigger/`) — see
@@ -57,20 +56,22 @@ so application behaviour is identical across engines.
 composer install && vendor/bin/phpunit
 ```
 
-Runs against an in-memory SQLite database by default. To also run against a
-real MySQL, PostgreSQL or SQL Server instance (the same suite CI runs on
-every push):
+Runs against an in-memory SQLite database by default. CI also runs the suite
+against real MySQL, PostgreSQL and SQL Server instances on every push; see
+[`docker-compose.yml`](docker-compose.yml) to reproduce that locally.
 
-```
-docker compose up -d mysql postgres sqlserver
-DB_DRIVER=pdo_mysql  DB_PORT=3310 DB_USER=root     DB_PASSWORD=secret composer test
-DB_DRIVER=pdo_pgsql  DB_PORT=5436 DB_USER=postgres DB_PASSWORD=secret composer test
-DB_DRIVER=pdo_sqlsrv DB_PORT=1437 DB_USER=sa       DB_PASSWORD='Secret_1234' composer test
-```
+## Requirements
 
-SQL Server needs its database created once before the first run (no
-`MSSQL_DATABASE`-equivalent env var exists):
+- PHP 8.4 or later
+- Composer
+- An [Appkit](https://github.com/modufolio/appkit) application, for the
+  entity manager, the `UploaderInterface`/`AlbumTreeInterface`/
+  `MediaJobsInterface` contracts it resolves, and (optionally) `FocusStoreInterface`
+- Extensions: `curl`, `dom`, `exif`, `fileinfo`, `gd`, `intl`, `libxml`, `pdo`,
+  `simplexml`, `sqlite3`, `zip`
 
-```
-sqlcmd -S 127.0.0.1,1437 -U sa -P 'Secret_1234' -Q "CREATE DATABASE media_test"
-```
+See [`composer.json`](composer.json) for the canonical dependency list.
+
+## License
+
+MIT. See [LICENSE](LICENSE).
